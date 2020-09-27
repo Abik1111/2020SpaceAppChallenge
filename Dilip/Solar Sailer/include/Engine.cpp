@@ -1836,7 +1836,7 @@ class Spaceship{
 private:
     glm::vec3 position;
     glm::vec3 direction;
-    const float velocity = 0.20f;
+    const float velocity = 0.020f;
     ObjMesh body;
     OpenGL::Texture texture;
 
