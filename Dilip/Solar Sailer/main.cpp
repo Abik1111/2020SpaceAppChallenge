@@ -40,6 +40,7 @@ bool initial = true;
 Tools::ShadowLoader shadow;
 Tools::FPSManager fpsManager(FPS);
 
+bool keyBuffer[128];
 float cam[]{
     0, 10.0, 0
 };
@@ -93,7 +94,7 @@ void init(){
     }
 
     {
-        float direction[] = {0.0f, -1.0f, -1.0f};
+        float direction[] = {0.0f, 0.0f, -1.0f};
         float a_color[] = {1.0f, 1.0f, 1.0f};
         float d_color[] = {1.0f, 1.0f, 1.0f};
         float s_color[] = {1.0f, 1.0f, 1.0f};
@@ -120,13 +121,14 @@ void init(){
     }
 
     {
-        shader.addUniform1i("u_useLighting", 0);
+        shader.addUniform1i("u_useLighting", 1);
         shader.addUniform1i("u_lightType", 1);
         shader.addUniform1i("u_textureMap", 0);
         shader.addUniform1i("u_texSlot", 0);
     }
 
     earth.loadPlanet("res/models/earth.obj", "res/textures/earth.png", 0.25);
+    earth.setPosition(glm::vec3(-5.0, 0.0, -5.0));
     {
 //        std::vector<std::string> locations;
 //        locations.push_back("res/textures/terrain/grass2.png");
@@ -140,8 +142,8 @@ void init(){
 
     {
         //player.loadFiles("res/models/player.obj", "res/textures/player.png", 0.125);
-        player.setPosition(glm::vec3(-2.0, 0.0, 0.0));
-        player.setDirection(glm::vec3(1.0,0.0,0.0));
+        player.setPosition(glm::vec3(0.0, 0.0, 0.0));
+        player.setDirection(glm::vec3(1.0,0.0,1.0));
     }
 
     {
@@ -182,9 +184,44 @@ static void resize(int width, int height){
     proj = glm::perspective(glm::radians(45.0f), (float)width/height, 0.1f, 200.0f);
 }
 
+static void closeWindow(){
+    shader.deleteShader();
+//    terrain.cleanUP();
+    player.cleanUP();
+    skybox.cleanUP();
+//    gui.cleanUP();
+//    GUI::deleteShader();
+    shadow.cleanUP();
+    exit(0);
+}
+
+static void handleKey(){
+    if(keyBuffer['q']){
+        closeWindow();
+        return;
+    }
+    glm::vec3 direction = glm::vec3(0.0);
+    if(keyBuffer['w']){
+        direction += glm::normalize(-camera.getDirection());
+    }
+    if(keyBuffer['a']){
+        direction += glm::normalize(glm::cross(glm::vec3(0.0, 1.0, 0.0), -camera.getDirection()));
+    }
+    if(keyBuffer['s']){
+        direction += glm::normalize(camera.getDirection());
+    }
+    if(keyBuffer['d']){
+        direction += glm::normalize(glm::cross(-camera.getDirection(), glm::vec3(0.0, 1.0, 0.0)));
+    }
+    player.setDirection(direction);
+    player.moveForward();
+}
+
 static void display(void){
     fpsManager.initiateTimer();
     fpsManager.updateCounter();
+
+    handleKey();
 
     glClearColor(0.5, 0.5, 0.5, 0.0);
 	renderer.clear();
@@ -199,7 +236,11 @@ static void display(void){
     shader.addUniformMat4f("u_MVP", mvp);
     shader.addUniform3f("u_viewPos", cam);
 
-    earth.drawPlanet(shader);
+    glm::mat4 viewProj = proj*view;
+    earth.increaseRotation(0.1f);
+    earth.drawPlanet(shader, viewProj);
+
+
     model = glm::mat4(1.0f);
     skybox.increaseRotation();
     //gui.draw();
@@ -237,42 +278,13 @@ static void display(void){
     glutPostRedisplay();
 }
 
-static void closeWindow(){
-    shader.deleteShader();
-//    terrain.cleanUP();
-    player.cleanUP();
-    skybox.cleanUP();
-//    gui.cleanUP();
-//    GUI::deleteShader();
-    shadow.cleanUP();
-
-    exit(0);
+static void key(unsigned char key, int x, int y){
+    keyBuffer[key] = true;
+    glutPostRedisplay();
 }
 
-static void key(unsigned char key, int x, int y){
-    switch (key)
-    {
-        case 27 :
-        case 'q':
-            closeWindow();
-            break;
-        case 'w':
-            player.setDirection(-camera.getDirection());
-            player.moveForward();
-            break;
-        case 'a':
-            player.setDirection(-camera.getDirection());
-            player.moveLeft();
-            break;
-        case 's':
-            player.setDirection(-camera.getDirection());
-            player.moveBackward();
-            break;
-        case 'd':
-            player.setDirection(-camera.getDirection());
-            player.moveRight();
-            break;
-    }
+static void keyUp(unsigned char key, int x, int y){
+    keyBuffer[key] = false;
     glutPostRedisplay();
 }
 
@@ -313,6 +325,7 @@ int main(int argc, char *argv[]){
     glutReshapeFunc(resize);
     glutDisplayFunc(display);
     glutKeyboardFunc(key);
+    glutKeyboardUpFunc(keyUp);
     glutMotionFunc(mouseMoved);
 	glutSetCursor(GLUT_CURSOR_NONE);
     glutPassiveMotionFunc(mouseMoved);

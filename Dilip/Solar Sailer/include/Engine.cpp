@@ -1789,17 +1789,43 @@ private:
     ObjMesh mesh;
     OpenGL::Texture texture;
     glm::vec3 position;
-    glm::vec3 rotation;
+    float rotation;
+    glm::vec3 rotation_axis;
     glm::vec3 velocity;
 
 public:
-    void loadPlanet(std::string objLocation, std::string textureLocation, float scaling = 1){
+    void loadPlanet(std::string objLocation, std::string textureLocation, float scaling = 1, glm::vec3 rot_axis = glm::vec3(0.0, 1.0, 0.0)){
+        rotation_axis = rot_axis;
+        rotation = 0.0;
         mesh.loadFile(objLocation, scaling);
         texture.loadTexture(textureLocation);
     }
 
-    void drawPlanet(OpenGL::Shader& shader){
+    void setRotaion(float rot){
+        rotation = rot;
+        if(rotation>=360){
+            rotation = 0;
+        }
+    }
+
+    void increaseRotation(float delta){
+        rotation += delta;
+        if(rotation>=360){
+            rotation = 0;
+        }
+    }
+
+    void setPosition(glm::vec3 pos){
+        position = pos;
+    }
+
+    void drawPlanet(OpenGL::Shader& shader, glm::mat4 viewProjection){
+        glm::mat4 model=glm::mat4(1.0f);
+        model = glm::translate(model, position);
+        model = viewProjection*model;
+        model = glm::rotate(model, glm::radians(rotation), rotation_axis);
         shader.bind();
+        shader.addUniformMat4f("u_MVP", model);
         texture.bind();
         mesh.bindArray();
         GLCall(glDrawArrays(GL_TRIANGLES, 0, mesh.getVertexCount()));
@@ -1820,7 +1846,11 @@ public:
     }
 
     void setDirection(glm::vec3 dir){
-        direction = dir;
+        if(dir.x==0.0 && dir.y==0.0 && dir.z==0.0){
+            direction = glm::vec3(0.0);
+            return;
+        }
+        direction = glm::normalize(dir);
     }
 
     glm::vec3 getPosition(){

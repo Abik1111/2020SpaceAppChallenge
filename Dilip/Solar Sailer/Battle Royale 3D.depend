@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1601227934 source:d:\programming projects\c++\solar sailer\include\engine.cpp
+1601232130 source:d:\programming projects\c++\solar sailer\include\engine.cpp
 	<GL/glew.h>
 	<GL/glut.h>
 	<stdlib.h>
@@ -1002,7 +1002,7 @@
 1586767292 source:d:\programming projects\c++\solar sailer\include\stb_image\stb_image.cpp
 	"stb_image.h"
 
-1601228282 source:d:\programming projects\c++\solar sailer\main.cpp
+1601232383 source:d:\programming projects\c++\solar sailer\main.cpp
 	<GL/glew.h>
 	<GL/glut.h>
 	<stdlib.h>
@@ -1015,7 +1015,7 @@
 	<glm/glm.hpp>
 	<glm/gtc/matrix_transform.hpp>
 
-1601227934 d:\programming projects\c++\solar sailer\include\engine.cpp
+1601232130 d:\programming projects\c++\solar sailer\include\engine.cpp
 	<GL/glew.h>
 	<GL/glut.h>
 	<stdlib.h>
