@@ -5,15 +5,9 @@ using namespace std;
 
 int main()
 {
-    Vector3 v;
-    v.setValue(1,2,3);
-    Vector3 c;
-    c=v+c;
-    cout<<Vector3::getVector(1,3,4).getMagnitude();
-
-
-
-
-
+    Matter Earth;
+    Earth.setMass(6e24);
+    cout<<Earth.getGravitationField(Vector4::getVector(0,1,1,1));
+    
     return 0;
 }
