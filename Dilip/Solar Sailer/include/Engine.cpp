@@ -1336,6 +1336,226 @@ public:
     }
 };
 //-------------------------------
+class Sphere{
+private:
+    OpenGL::VertexArray va;
+    OpenGL::VertexBuffer vb;
+    OpenGL::IndexBuffer ib;
+    unsigned int segment;
+
+    std::vector<glm::vec3> calculateIcosahedronPositions(float radius){
+        const float H_ANGLE = glm::radians(72.0);
+        const float V_ANGLE = glm::radians(26.56505118);
+
+        float y, xz;
+        float hAngle1 = -1.570796 - H_ANGLE / 2;
+        float hAngle2 = -1.570796;
+        std::vector<glm::vec3> positions(12);
+
+        //Top and bottom vertex positions
+        positions[0] = glm::vec3(0.0, radius, 0.0);
+        positions[11] = glm::vec3(0.0, -radius, 0.0);
+
+        //Compute 10 vertices at 1st and 2nd rows
+        for(unsigned int i = 1; i <= 5; i++)
+        {
+            y  = radius * sinf(V_ANGLE);
+            xz = radius * cosf(V_ANGLE);
+
+            positions[i] = glm::vec3(xz * cosf(hAngle1), y, -xz * sinf(hAngle1));
+            positions[i+5] = glm::vec3(xz * cosf(hAngle2), -y, -xz * sinf(hAngle2));
+            //Next horizontal angles
+            hAngle1 += H_ANGLE;
+            hAngle2 += H_ANGLE;
+        }
+        return positions;
+    }
+
+    void loadIsocaSphereVertices(float radius, unsigned int subdivision)
+    {
+        std::vector<glm::vec3> positions = calculateIcosahedronPositions(radius);
+        std::vector<SimpleVertex> vertices;
+        for(unsigned int i=0; i<12; i++){
+            SimpleVertex vertex;
+            vertex.position = positions[i];
+            vertex.normal = glm::normalize(positions[i]);
+            if(i==0){
+                vertex.texCoords = glm::vec2(0.5, 1.0);
+            }
+            else if(i==11){
+                vertex.texCoords = glm::vec2(0.5, 0.0);
+            }
+            else if(i<6){
+                vertex.texCoords = glm::vec2(0.5+0.8333*(i-3), 0.66);
+            }
+            else{
+                vertex.texCoords = glm::vec2(0.5+0.8333*(i-8), 0.33);
+            }
+            vertices.push_back(vertex);
+        }
+        std::vector<unsigned int> indices;
+        for(unsigned int i=0; i<4; i++){
+            indices.push_back(0);
+            indices.push_back(i+1);
+            indices.push_back(i+2);
+        }
+        indices.push_back(0);
+        indices.push_back(5);
+        indices.push_back(1);
+        for(unsigned int i=5; i<9; i++){
+            indices.push_back(11);
+            indices.push_back(i+2);
+            indices.push_back(i+1);
+        }
+        indices.push_back(11);
+        indices.push_back(6);
+        indices.push_back(10);
+
+        indices.push_back(1);
+        indices.push_back(5);
+        indices.push_back(10);
+        indices.push_back(1);
+        indices.push_back(10);
+        indices.push_back(6);
+        for(unsigned int i=2; i<5; i++){
+            indices.push_back(i);
+            indices.push_back(i-1);
+            indices.push_back(i+4);
+
+            indices.push_back(i);
+            indices.push_back(i+4);
+            indices.push_back(i+5);
+        }
+        indices.push_back(5);
+        indices.push_back(4);
+        indices.push_back(9);
+        indices.push_back(5);
+        indices.push_back(9);
+        indices.push_back(10);
+
+        vb.loadData(&vertices[0], vertices.size()*sizeof(SimpleVertex));
+        va.generateVertexArray();
+        OpenGL::VertexBufferLayout vbl;
+        vbl.pushFloat(3);
+        vbl.pushFloat(3);
+        vbl.pushFloat(2);
+        va.addBuffer(vb, vbl);
+        ib.loadData(&indices[0], indices.size());
+    }
+
+    void loadCubeSphere(float radius){
+        float segment_size = 20.0/segment;
+        std::vector<SimpleVertex> vertices;
+        //Positive x face
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                SimpleVertex vertex;
+                vertex.normal = glm::normalize(glm::vec3(10.0, -10.0+i*segment_size, 10.0-j*segment_size));
+                vertex.position = radius*vertex.normal;
+                vertex.texCoords = glm::vec2(0.25+0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment);
+                vertices.push_back(vertex);
+            }
+        }
+        //Positive z face
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                SimpleVertex vertex;
+                vertex.normal = glm::normalize(glm::vec3(-10.0+j*segment_size, -10.0+i*segment_size, 10.0));
+                vertex.position = radius*vertex.normal;
+                vertex.texCoords = glm::vec2(0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment);
+                vertices.push_back(vertex);
+            }
+        }
+        //Positive y face
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                SimpleVertex vertex;
+                vertex.normal = glm::normalize(glm::vec3(-10.0+j*segment_size, 10.0, 10.0-i*segment_size));
+                vertex.position = radius*vertex.normal;
+                vertex.texCoords = glm::vec2(0.25+0.25*(float)i/segment, 1.0-0.3333*(float)j/segment);
+                vertices.push_back(vertex);
+            }
+        }
+
+        //Negative x face
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                SimpleVertex vertex;
+                vertex.normal = glm::normalize(glm::vec3(-10.0, -10.0+i*segment_size, -10.0+j*segment_size));
+                vertex.position = radius*vertex.normal;
+                vertex.texCoords = glm::vec2(0.75+0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment);
+                vertices.push_back(vertex);
+            }
+        }
+        //Negative z face
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                SimpleVertex vertex;
+                vertex.normal = glm::normalize(glm::vec3(10.0-j*segment_size, -10.0+i*segment_size, -10.0));
+                vertex.position = radius*vertex.normal;
+                vertex.texCoords = glm::vec2(0.5+0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment);
+                vertices.push_back(vertex);
+            }
+        }
+        //Negative y face
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                SimpleVertex vertex;
+                vertex.normal = glm::normalize(glm::vec3(-10.0+j*segment_size, -10.0, -10.0+i*segment_size));
+                vertex.position = radius*vertex.normal;
+                vertex.texCoords = glm::vec2(0.5-0.25*(float)i/segment, 0.3333*(float)j/segment);
+                vertices.push_back(vertex);
+            }
+        }
+
+        std::vector<unsigned int> indices;
+
+        //Calculating index for each frame
+        for(unsigned int face=0; face<6; face++){
+            unsigned int offset = face*(segment+1)*(segment+1);
+            for(unsigned int i=0; i<segment; i++){
+                for(unsigned int j=0; j<segment; j++){
+                    indices.push_back(offset+i*(segment+1)+j);
+                    indices.push_back(offset+i*(segment+1)+j+1);
+                    indices.push_back(offset+i*(segment+1)+j+segment+2);
+
+                    indices.push_back(offset+i*(segment+1)+j);
+                    indices.push_back(offset+i*(segment+1)+j+segment+2);
+                    indices.push_back(offset+i*(segment+1)+j+segment+1);
+                }
+            }
+        }
+
+        vb.loadData(&vertices[0], vertices.size()*sizeof(SimpleVertex));
+        ib.loadData(&indices[0], indices.size());
+        OpenGL::VertexBufferLayout vbl;
+        vbl.pushFloat(3);
+        vbl.pushFloat(3);
+        vbl.pushFloat(2);
+        va.generateVertexArray();
+        va.addBuffer(vb, vbl);
+    }
+
+public:
+    void loadVertices(float radius, unsigned int segment_num = 4){
+        this->segment = segment_num;
+        loadCubeSphere(radius);
+    }
+
+    void draw(OpenGL::Shader shader){
+        shader.bind();
+        va.bind();
+        ib.bind();
+        GLCall(glDrawElements(GL_TRIANGLES, ib.getCount(), GL_UNSIGNED_INT, NULL));
+    }
+
+    void cleanUp(){
+        va.deleteVertexArray();
+        vb.deleteVertexBuffer();
+        ib.deleteIndexBuffer();
+    }
+};
+
 /**
 *Blueprint for sky box object
 *Individual objects will have its own shader considering there will be one or few sky box only
@@ -1786,7 +2006,7 @@ public:
 
 class Planet{
 private:
-    ObjMesh mesh;
+    Sphere sphere;
     OpenGL::Texture texture;
     glm::vec3 position;
     float rotation;
@@ -1794,10 +2014,10 @@ private:
     glm::vec3 velocity;
 
 public:
-    void loadPlanet(std::string objLocation, std::string textureLocation, float scaling = 1, glm::vec3 rot_axis = glm::vec3(0.0, 1.0, 0.0)){
+    void loadPlanet(std::string textureLocation, float radius = 1,unsigned int segment = 4, glm::vec3 rot_axis = glm::vec3(0.0, 1.0, 0.0)){
         rotation_axis = rot_axis;
         rotation = 0.0;
-        mesh.loadFile(objLocation, scaling);
+        sphere.loadVertices(radius, segment);
         texture.loadTexture(textureLocation);
     }
 
@@ -1828,8 +2048,12 @@ public:
         shader.bind();
         shader.addUniformMat4f("u_MVP", model);
         texture.bind();
-        mesh.bindArray();
-        GLCall(glDrawArrays(GL_TRIANGLES, 0, mesh.getVertexCount()));
+        sphere.draw(shader);
+    }
+
+    void cleanUp(){
+        texture.deleteTexture();
+        sphere.cleanUp();
     }
 };
 
@@ -2049,7 +2273,7 @@ public:
         shader.bind();
         va.bind();
         ib.bind();
-        GLCall(glDrawElements(GL_TRIANGLES, ib.getCount(), GL_UNSIGNED_INT, NULL))    ;
+        GLCall(glDrawElements(GL_TRIANGLES, ib.getCount(), GL_UNSIGNED_INT, NULL));
     }
 
     /**

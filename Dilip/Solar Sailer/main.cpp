@@ -20,6 +20,7 @@ Renderer renderer;
 
 SkyBox skybox;
 Planet earth;
+Planet mars;
 //Terrain terrain;
 //Terrain to be drawn for each planet
 
@@ -127,8 +128,11 @@ void init(){
         shader.addUniform1i("u_texSlot", 0);
     }
 
-    earth.loadPlanet("res/models/earth.obj", "res/textures/earth.png", 0.25);
+    earth.loadPlanet("res/textures/earth.png", 0.75, 16);
     earth.setPosition(glm::vec3(-5.0, 0.0, -5.0));
+
+    mars.loadPlanet("res/textures/mars.png", 1.0, 16);
+    mars.setPosition(glm::vec3(0.0, 0.0, -5.0));
     {
 //        std::vector<std::string> locations;
 //        locations.push_back("res/textures/terrain/grass2.png");
@@ -191,6 +195,8 @@ static void closeWindow(){
     skybox.cleanUP();
 //    gui.cleanUP();
 //    GUI::deleteShader();
+    mars.cleanUp();
+    earth.cleanUp();
     shadow.cleanUP();
     exit(0);
 }
@@ -240,27 +246,30 @@ static void display(void){
     earth.increaseRotation(0.1f);
     earth.drawPlanet(shader, viewProj);
 
+    mars.increaseRotation(0.15f);
+    mars.drawPlanet(shader, viewProj);
+
 
     model = glm::mat4(1.0f);
     skybox.increaseRotation();
     //gui.draw();
     Tools::CameraData temp_camera;
     temp_camera = shadow.getCameraData(camera, 45, 0.1, 15.0, screenWidth/screenHeight, 50.0);
-    shadow.startSampling();
-    {
-        renderer.clear();
-        colorless.bind();
-        mvp = temp_camera.projection * temp_camera.view;
-        colorless.addUniformMat4f("mvp", mvp);
-        //terrain.draw(temp_camera.projection*temp_camera.view, colorless);
-        //model = glm::translate(model, player.getPosition());
-        //model = glm::rotate(model, glm::radians(player.getRotation()+180), glm::vec3(0.0, 1.0, 0.0));
-        //mvp = temp_camera.projection * temp_camera.view * model;
-
-        //colorless.addUniformMat4f("mvp", mvp);
-        //player.draw(colorless);
-    }
-    shadow.stopSampling(screenWidth, screenHeight);
+//    shadow.startSampling();
+//    {
+//        renderer.clear();
+//        colorless.bind();
+//        mvp = temp_camera.projection * temp_camera.view;
+//        colorless.addUniformMat4f("mvp", mvp);
+//        //terrain.draw(temp_camera.projection*temp_camera.view, colorless);
+//        //model = glm::translate(model, player.getPosition());
+//        //model = glm::rotate(model, glm::radians(player.getRotation()+180), glm::vec3(0.0, 1.0, 0.0));
+//        //mvp = temp_camera.projection * temp_camera.view * model;
+//
+//        //colorless.addUniformMat4f("mvp", mvp);
+//        //player.draw(colorless);
+//    }
+//    shadow.stopSampling(screenWidth, screenHeight);
 
 //    shadow.bindDepthTexture(terrain.shadowDepthSlot());
 //    terrain.draw(view, proj, temp_camera.projection*temp_camera.view);
