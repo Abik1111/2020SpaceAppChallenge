@@ -76,6 +76,7 @@ public:
     }
     double getMagnitude(){
         double m = sqrt(this->v[0]*this->v[0]+this->v[1]*this->v[1]+this->v[2]*this->v[2]);
+        return m;
     }
 
     //mathematics
@@ -105,11 +106,19 @@ public:
         d=this->v[0]*v.v[0]+this->v[1]*v.v[1]+this->v[2]*v.v[2];
         return d;
     }
-    void scale(Vector3 v){
+    Vector3 scale(Vector3 v){
         Vector3 temp;
         temp.v[0]=this->v[0]*v.v[0];
         temp.v[1]=this->v[1]*v.v[1];
         temp.v[2]=this->v[2]*v.v[2];
+        return temp;
+    }
+    Vector3 scale(double v){
+        Vector3 temp;
+        temp.v[0]=this->v[0]*v;
+        temp.v[1]=this->v[1]*v;
+        temp.v[2]=this->v[2]*v;
+        return temp;
     }
 
     //Print Value
