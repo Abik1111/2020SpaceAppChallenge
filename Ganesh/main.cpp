@@ -5,10 +5,11 @@ using namespace std;
 
 int main()
 {
-    Vector v;
-    v.setValue(1,2,3,4);
-
-    v.print();
+    Vector3 v;
+    v.setValue(1,2,3);
+    Vector3 c;
+    c=v+c;
+    cout<<Vector3::getVector(1,3,4).getMagnitude();
 
 
 
