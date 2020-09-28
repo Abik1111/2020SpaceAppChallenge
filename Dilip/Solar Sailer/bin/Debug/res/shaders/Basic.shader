@@ -21,10 +21,10 @@ void main()
 
     //Recalculating the normal but without translation effect
     mat4 model = u_model;
-    model[3].x = 0;
-    model[3].y = 0;
-    model[3].z = 0;
-    model[3].w = 1;
+    model[3][0] = 0;
+    model[3][1]= 0;
+    model[3][2] = 0;
+    model[3][3] = 1;
     v_normal = normalize(vec3(model * vec4(normal, 1.0)));
 }
 

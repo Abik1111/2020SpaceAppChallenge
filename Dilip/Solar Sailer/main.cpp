@@ -319,7 +319,6 @@ int main(int argc, char *argv[]){
     Window::initializeGLEW(false);//Start extension wrangle without showing errors
     Window::enableBackfaceCulling();
     Window::enableDepthTest();
-    Window::enableClipDistance0();
 
     init();
     glutReshapeFunc(resize);

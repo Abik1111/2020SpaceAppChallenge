@@ -1822,8 +1822,9 @@ public:
     void drawPlanet(OpenGL::Shader& shader, glm::mat4 viewProjection){
         glm::mat4 model=glm::mat4(1.0f);
         model = glm::translate(model, position);
-        model = viewProjection*model;
         model = glm::rotate(model, glm::radians(rotation), rotation_axis);
+        shader.addUniformMat4f("u_model", model);
+        model = viewProjection*model;
         shader.bind();
         shader.addUniformMat4f("u_MVP", model);
         texture.bind();
