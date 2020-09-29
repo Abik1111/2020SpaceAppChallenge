@@ -19,7 +19,7 @@ OpenGL::Shader GUI::shader;
 Renderer renderer;
 
 SkyBox skybox;
-Planet earth;
+//Planet earth;
 PlanetInClose closeEarth;
 Planet mars;
 //Terrain terrain;
@@ -129,9 +129,9 @@ void init(){
         shader.addUniform1i("u_texSlot", 0);
     }
 
-    earth.loadPlanet("res/textures/earth.png", 0.75, 16);
-    earth.setPosition(glm::vec3(-5.0, 0.0, -5.0));
-    closeEarth.loadPlanet(earth, "res/textures/earth.png");
+//    earth.loadPlanet("res/textures/mars.png", 0.75, 16);
+//    earth.setPosition(glm::vec3(-5.0, 0.0, -5.0));
+    closeEarth.loadPlanet(1.0f, "res/textures/Earth/Diffuse_2K.png", "res/textures/Earth/Bump_2K.png");
     closeEarth.setPosition(glm::vec3(0.0, 0.0, -5.0));
     mars.loadPlanet("res/textures/mars.png", 1.0, 16);
     mars.setPosition(glm::vec3(5.0, 0.0, -5.0));
@@ -198,7 +198,7 @@ static void closeWindow(){
 //    gui.cleanUP();
 //    GUI::deleteShader();
     mars.cleanUp();
-    earth.cleanUp();
+//    earth.cleanUp();
     shadow.cleanUP();
     exit(0);
 }
@@ -245,8 +245,8 @@ static void display(void){
     shader.addUniform3f("u_viewPos", cam);
 
     glm::mat4 viewProj = proj*view;
-    earth.increaseRotation(0.1f);
-    earth.drawPlanet(shader, viewProj);
+    //earth.increaseRotation(0.1f);
+    //earth.drawPlanet(shader, viewProj);
 
     mars.increaseRotation(0.15f);
     mars.drawPlanet(shader, viewProj);
