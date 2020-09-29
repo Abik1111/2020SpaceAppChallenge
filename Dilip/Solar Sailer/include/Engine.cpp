@@ -30,7 +30,8 @@
 #include <bits/stdc++.h>
 #include "stb_image/stb_image.h"
 #include <string.h>
-#include<cstdlib>
+#include <cstdlib>
+#include <math.h>
 
 #define ASSERT(x) if(!x)exit(0)
 
@@ -1340,21 +1341,33 @@ public:
 
 class PerlinNoise{
 private:
-     int nWidth = 1024;
-     int nHeight = 1024;
+     int nWidth = 16;
+     int nHeight = 16;
      int numOctaves = 4;
-     float fBias = 5.0f;
+     float totalWidth = 32.0;
+     float totalHeight = 32.0;
+     std::vector<float> fseeds;
 
-     float noise(int seed){
-         srand(seed);
-         float value = rand()%101;
+     float noise(){
+         float value = float(int(rand())%101);
          value /= 100.0;
          return value;
      }
 
+     void loadSeeds(){
+         for(unsigned int i=0; i<totalWidth*totalHeight; i++){
+            fseeds.push_back(noise());
+         }
+     }
 
 public:
+    /**
+    *Value of x and y should be between 0 to 1
+    */
     double ValueNoise_2D(double x, double y) {
+        loadSeeds();
+        x *= totalWidth;
+        y *= totalHeight;
         float fNoise = 0.0f;
         float fScaleAcc = 0.0f;
         float fScale = 1.0f;
@@ -1370,13 +1383,13 @@ public:
             float fBlendX = (float)(x - nSampleX1) / (float)nPitch;
             float fBlendY = (float)(y - nSampleY1) / (float)nPitch;
 
-            float fSampleT = (1.0f - fBlendX) * noise(nSampleY1 * nWidth + nSampleX1) + fBlendX * noise(nSampleY1 * nWidth + nSampleX2);
-            float fSampleB = (1.0f - fBlendX) * noise(nSampleY2 * nWidth + nSampleX1) + fBlendX * noise(nSampleY2 * nWidth + nSampleX2);
+            float fSampleT = (1.0f - fBlendX) * fseeds[nSampleY1 * nWidth + nSampleX1] + fBlendX * fseeds[nSampleY1 * nWidth + nSampleX2];
+            float fSampleB = (1.0f - fBlendX) * fseeds[nSampleY2 * nWidth + nSampleX1] + fBlendX * fseeds[nSampleY2 * nWidth + nSampleX2];
 
             fScaleAcc += fScale;
             fNoise += (fBlendY * (fSampleB - fSampleT) + fSampleT) * fScale;
-            fScale = fScale / fBias;
         }
+        //return pow(noise(0),5);
         return fNoise/fScaleAcc;
     }
 };
@@ -2252,7 +2265,7 @@ public:
     void loadPlanet(Planet planet, std::string textureLocation){
         rotation_axis = planet.getRotationAxis();
         rotation = 0.0;
-        sphere.loadVertices(1.0f, 1.0, 8);
+        sphere.loadVertices(1.0f, 0.1f, 32);
         texture.loadTexture(textureLocation);
     }
 
