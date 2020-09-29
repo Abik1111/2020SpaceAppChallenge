@@ -1,12 +1,13 @@
 # depslib dependency file v1.0
-1601265251 source:c:\users\user\documents\codeblocks\spaceapp\main.cpp
+1601372976 source:c:\users\user\documents\codeblocks\spaceapp\main.cpp
 	<iostream>
-	"matter.h"
+	"spacetime.h"
 
-1601264427 c:\users\user\documents\codeblocks\spaceapp\matter.h
+1601373154 c:\users\user\documents\codeblocks\spaceapp\matter.h
 	<iostream>
-	"vector4.h"
 	"vector3.h"
+	<math.h>
+	"constant.h"
 
 1601235627 c:\users\user\documents\codeblocks\spaceapp\vector.h
 	<iostream>
@@ -24,7 +25,13 @@
 1601229870 c:\users\user\documents\codeblocks\spaceapp\vector.cpp
 	<iostream>
 
-1601266291 c:\users\user\documents\codeblocks\spaceapp\vector3.h
+1601371266 c:\users\user\documents\codeblocks\spaceapp\vector3.h
 	<iostream>
 	<math.h>
+
+1601327446 c:\users\user\documents\codeblocks\spaceapp\constant.h
+
+1601372865 c:\users\user\documents\codeblocks\spaceapp\spacetime.h
+	"matter.h"
+	<map>
 
