@@ -20,6 +20,7 @@ Renderer renderer;
 
 SkyBox skybox;
 Planet earth;
+PlanetInClose closeEarth;
 Planet mars;
 //Terrain terrain;
 //Terrain to be drawn for each planet
@@ -130,9 +131,10 @@ void init(){
 
     earth.loadPlanet("res/textures/earth.png", 0.75, 16);
     earth.setPosition(glm::vec3(-5.0, 0.0, -5.0));
-
+    closeEarth.loadPlanet(earth, "res/textures/earth.png");
+    closeEarth.setPosition(glm::vec3(0.0, 0.0, -5.0));
     mars.loadPlanet("res/textures/mars.png", 1.0, 16);
-    mars.setPosition(glm::vec3(0.0, 0.0, -5.0));
+    mars.setPosition(glm::vec3(5.0, 0.0, -5.0));
     {
 //        std::vector<std::string> locations;
 //        locations.push_back("res/textures/terrain/grass2.png");
@@ -249,6 +251,8 @@ static void display(void){
     mars.increaseRotation(0.15f);
     mars.drawPlanet(shader, viewProj);
 
+    closeEarth.increaseRotation(0.1f);
+    closeEarth.drawPlanet(shader, viewProj);
 
     model = glm::mat4(1.0f);
     skybox.increaseRotation();

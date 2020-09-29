@@ -30,6 +30,7 @@
 #include <bits/stdc++.h>
 #include "stb_image/stb_image.h"
 #include <string.h>
+#include<cstdlib>
 
 #define ASSERT(x) if(!x)exit(0)
 
@@ -1336,6 +1337,50 @@ public:
     }
 };
 //-------------------------------
+
+class PerlinNoise{
+private:
+     int nWidth = 1024;
+     int nHeight = 1024;
+     int numOctaves = 4;
+     float fBias = 5.0f;
+
+     float noise(int seed){
+         srand(seed);
+         float value = rand()%101;
+         value /= 100.0;
+         return value;
+     }
+
+
+public:
+    double ValueNoise_2D(double x, double y) {
+        float fNoise = 0.0f;
+        float fScaleAcc = 0.0f;
+        float fScale = 1.0f;
+
+        for (int o = 0; o < numOctaves; o++){
+            int nPitch = nWidth >> o;
+            int nSampleX1 = (x / nPitch) * nPitch;
+            int nSampleY1 = (y / nPitch) * nPitch;
+
+            int nSampleX2 = (nSampleX1 + nPitch) % nWidth;
+            int nSampleY2 = (nSampleY1 + nPitch) % nWidth;
+
+            float fBlendX = (float)(x - nSampleX1) / (float)nPitch;
+            float fBlendY = (float)(y - nSampleY1) / (float)nPitch;
+
+            float fSampleT = (1.0f - fBlendX) * noise(nSampleY1 * nWidth + nSampleX1) + fBlendX * noise(nSampleY1 * nWidth + nSampleX2);
+            float fSampleB = (1.0f - fBlendX) * noise(nSampleY2 * nWidth + nSampleX1) + fBlendX * noise(nSampleY2 * nWidth + nSampleX2);
+
+            fScaleAcc += fScale;
+            fNoise += (fBlendY * (fSampleB - fSampleT) + fSampleT) * fScale;
+            fScale = fScale / fBias;
+        }
+        return fNoise/fScaleAcc;
+    }
+};
+
 class Sphere{
 private:
     OpenGL::VertexArray va;
@@ -1540,6 +1585,127 @@ public:
     void loadVertices(float radius, unsigned int segment_num = 4){
         this->segment = segment_num;
         loadCubeSphere(radius);
+    }
+
+    void draw(OpenGL::Shader shader){
+        shader.bind();
+        va.bind();
+        ib.bind();
+        GLCall(glDrawElements(GL_TRIANGLES, ib.getCount(), GL_UNSIGNED_INT, NULL));
+    }
+
+    void cleanUp(){
+        va.deleteVertexArray();
+        vb.deleteVertexBuffer();
+        ib.deleteIndexBuffer();
+    }
+};
+
+class BumpySphere{
+private:
+    OpenGL::VertexArray va;
+    OpenGL::VertexBuffer vb;
+    OpenGL::IndexBuffer ib;
+    unsigned int segment;
+
+    void loadCubeSphere(float radius, float max_height){
+        float segment_size = 20.0/segment;
+        std::vector<SimpleVertex> vertices;
+        PerlinNoise perlin;
+        //Positive x face
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                SimpleVertex vertex;
+                vertex.normal = glm::normalize(glm::vec3(10.0, -10.0+i*segment_size, 10.0-j*segment_size));
+                vertex.position = ((float)perlin.ValueNoise_2D(0.25+0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment)*max_height+radius)*vertex.normal;
+                vertex.texCoords = glm::vec2(0.25+0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment);
+                vertices.push_back(vertex);
+            }
+        }
+        //Positive z face
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                SimpleVertex vertex;
+                vertex.normal = glm::normalize(glm::vec3(-10.0+j*segment_size, -10.0+i*segment_size, 10.0));
+                vertex.position = ((float)perlin.ValueNoise_2D(0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment)*max_height+radius)*vertex.normal;
+                vertex.texCoords = glm::vec2(0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment);
+                vertices.push_back(vertex);
+            }
+        }
+        //Positive y face
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                SimpleVertex vertex;
+                vertex.normal = glm::normalize(glm::vec3(-10.0+j*segment_size, 10.0, 10.0-i*segment_size));
+                vertex.position = ((float)perlin.ValueNoise_2D(0.25+0.25*(float)i/segment, 1.0-0.3333*(float)j/segment)*max_height+radius)*vertex.normal;
+                vertex.texCoords = glm::vec2(0.25+0.25*(float)i/segment, 1.0-0.3333*(float)j/segment);
+                vertices.push_back(vertex);
+            }
+        }
+
+        //Negative x face
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                SimpleVertex vertex;
+                vertex.normal = glm::normalize(glm::vec3(-10.0, -10.0+i*segment_size, -10.0+j*segment_size));
+                vertex.position = ((float)perlin.ValueNoise_2D(0.75+0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment)*max_height+radius)*vertex.normal;
+                vertex.texCoords = glm::vec2(0.75+0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment);
+                vertices.push_back(vertex);
+            }
+        }
+        //Negative z face
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                SimpleVertex vertex;
+                vertex.normal = glm::normalize(glm::vec3(10.0-j*segment_size, -10.0+i*segment_size, -10.0));
+                vertex.position = ((float)perlin.ValueNoise_2D(0.5+0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment)*max_height+radius)*vertex.normal;
+                vertex.texCoords = glm::vec2(0.5+0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment);
+                vertices.push_back(vertex);
+            }
+        }
+        //Negative y face
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                SimpleVertex vertex;
+                vertex.normal = glm::normalize(glm::vec3(-10.0+j*segment_size, -10.0, -10.0+i*segment_size));
+                vertex.position = ((float)perlin.ValueNoise_2D(0.5-0.25*(float)i/segment, 0.3333*(float)j/segment)*max_height+radius)*vertex.normal;
+                vertex.texCoords = glm::vec2(0.5-0.25*(float)i/segment, 0.3333*(float)j/segment);
+                vertices.push_back(vertex);
+            }
+        }
+
+        std::vector<unsigned int> indices;
+
+        //Calculating index for each frame
+        for(unsigned int face=0; face<6; face++){
+            unsigned int offset = face*(segment+1)*(segment+1);
+            for(unsigned int i=0; i<segment; i++){
+                for(unsigned int j=0; j<segment; j++){
+                    indices.push_back(offset+i*(segment+1)+j);
+                    indices.push_back(offset+i*(segment+1)+j+1);
+                    indices.push_back(offset+i*(segment+1)+j+segment+2);
+
+                    indices.push_back(offset+i*(segment+1)+j);
+                    indices.push_back(offset+i*(segment+1)+j+segment+2);
+                    indices.push_back(offset+i*(segment+1)+j+segment+1);
+                }
+            }
+        }
+
+        vb.loadData(&vertices[0], vertices.size()*sizeof(SimpleVertex));
+        ib.loadData(&indices[0], indices.size());
+        OpenGL::VertexBufferLayout vbl;
+        vbl.pushFloat(3);
+        vbl.pushFloat(3);
+        vbl.pushFloat(2);
+        va.generateVertexArray();
+        va.addBuffer(vb, vbl);
+    }
+
+public:
+    void loadVertices(float radius, float max_height, unsigned int segment_num = 4){
+        this->segment = segment_num;
+        loadCubeSphere(radius, max_height);
     }
 
     void draw(OpenGL::Shader shader){
@@ -2051,11 +2217,81 @@ public:
         sphere.draw(shader);
     }
 
+    glm::vec3 getPosition(){
+        return position;
+    }
+
+    glm::vec3 getRotationAxis(){
+        return rotation_axis;
+    }
+
     void cleanUp(){
         texture.deleteTexture();
         sphere.cleanUp();
     }
 };
+
+class PlanetInClose{
+private:
+    BumpySphere sphere;
+    OpenGL::Texture texture;
+    glm::vec3 position;
+    float rotation;
+    glm::vec3 rotation_axis;
+    glm::vec3 velocity;
+
+    void saveToFile(std::string destination){
+        //Save the data to the file
+    }
+
+    void loadFromFile(std::string source){
+        //Load data from file specifying minimum data
+    }
+
+public:
+    void loadPlanet(Planet planet, std::string textureLocation){
+        rotation_axis = planet.getRotationAxis();
+        rotation = 0.0;
+        sphere.loadVertices(1.0f, 1.0, 8);
+        texture.loadTexture(textureLocation);
+    }
+
+    void setRotaion(float rot){
+        rotation = rot;
+        if(rotation>=360){
+            rotation = 0;
+        }
+    }
+
+    void increaseRotation(float delta){
+        rotation += delta;
+        if(rotation>=360){
+            rotation = 0;
+        }
+    }
+
+    void setPosition(glm::vec3 pos){
+        position = pos;
+    }
+
+    void drawPlanet(OpenGL::Shader& shader, glm::mat4 viewProjection){
+        glm::mat4 model=glm::mat4(1.0f);
+        model = glm::translate(model, position);
+        model = glm::rotate(model, glm::radians(rotation), rotation_axis);
+        shader.addUniformMat4f("u_model", model);
+        model = viewProjection*model;
+        shader.bind();
+        shader.addUniformMat4f("u_MVP", model);
+        texture.bind();
+        sphere.draw(shader);
+    }
+
+    void cleanUp(){
+        texture.deleteTexture();
+        sphere.cleanUp();
+    }
+};
+
 
 class Spaceship{
 private:
