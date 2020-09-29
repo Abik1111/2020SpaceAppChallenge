@@ -1,0 +1,37 @@
+# depslib dependency file v1.0
+1601401002 source:c:\users\user\documents\codeblocks\opengl\main.cpp
+	<GL/glut.h>
+	<stdlib.h>
+	"spacetime.h"
+
+1367794996 c:\mingw64\mingw64\include\gl\glut.h
+	"freeglut_std.h"
+
+1367795078 c:\mingw64\mingw64\include\gl\freeglut_std.h
+	<windows.h>
+	<OpenGL/gl.h>
+	<OpenGL/glu.h>
+	<GL/gl.h>
+	<GL/glu.h>
+	<stdlib.h>
+
+1601398099 source:c:\users\user\documents\codeblocks\opengl\physicsmain.cpp
+	<iostream>
+	"spacetime.h"
+
+1601399693 c:\users\user\documents\codeblocks\opengl\spacetime.h
+	"matter.h"
+	<map>
+
+1601401051 c:\users\user\documents\codeblocks\opengl\matter.h
+	<iostream>
+	"vector3.h"
+	<math.h>
+	"constant.h"
+
+1601371266 c:\users\user\documents\codeblocks\opengl\vector3.h
+	<iostream>
+	<math.h>
+
+1601399932 c:\users\user\documents\codeblocks\opengl\constant.h
+
