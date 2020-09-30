@@ -36,20 +36,21 @@ Spacetime spacetime;
 int physicsMain(){
 
     Matter Sun;
-    Sun.setMass(1e6);
+    Sun.setMass(1.9e30);
 
     Matter Earth;
-    Earth.setMass(1);
-    Earth.setPosition(Vector3::getVector(3,0,0));
-    Earth.setVelocity(Vector3::getVector(0,0,1).scale(0.004));
+    Earth.setMass(6e24);
+    Earth.setPosition(Vector3::getVector(150.0e9,0,0));
+    Earth.setVelocity(Vector3::getVector(0,0,1).scale(29.78e3));
 
     Matter Mars;
     Mars.setMass(6.4171e23);
     Mars.setPosition(Vector3::getVector(227.939e9,0,0));
+    Mars.setVelocity(Vector3::getVector(0,0,1).scale(24.077e3));
 
     spacetime.addMatter(0,Sun);
     spacetime.addMatter(3,Earth);
-    //spacetime.addMatter(4,Mars);
+    spacetime.addMatter(4,Mars);
 
 //    for(int i=0;i<30;i++){
 //        spacetime.update();
@@ -68,23 +69,35 @@ static void display(void)
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity() ;
-    gluLookAt(0,6,6,0,0,0,0,1,0);
+    gluLookAt(0,9,0,0,0,0,0,0,-1);
 
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glColor3d(1,0,0);
 
-    Vector3 pos=spacetime.getMatter(3).getPosition();
+    Vector3 pos;
+
+    glColor3d(0,1,0);
+    pos=spacetime.getMatter(3).getPosition();
+    pos=pos.scale(1e-11);
     glPushMatrix();
         glTranslated(pos.getValue1(),pos.getValue2(),pos.getValue3());
-        glutSolidSphere(0.3,9,9);
+        glutSolidSphere(0.3,18,18);
+    glPopMatrix();
+
+    glColor3d(1,0,0);
+    pos=spacetime.getMatter(4).getPosition();
+    pos=pos.scale(1e-11);
+    glPushMatrix();
+        glTranslated(pos.getValue1(),pos.getValue2(),pos.getValue3());
+        glutSolidSphere(0.3,18,18);
     glPopMatrix();
 
     glColor3d(1,1,0);
     pos=spacetime.getMatter(0).getPosition();
+    pos=pos.scale(1e-11);
     glPushMatrix();
         glTranslated(pos.getValue1(),pos.getValue2(),pos.getValue3());
-        glutSolidSphere(0.6,9,9);
+        glutSolidSphere(0.6,18,18);
     glPopMatrix();
 
 
@@ -168,8 +181,8 @@ static void idle(void)
 int main(int argc, char *argv[])
 {
     glutInit(&argc, argv);
-    glutInitWindowSize(640,480);
-    glutInitWindowPosition(10,10);
+    glutInitWindowSize(720,640);
+    glutInitWindowPosition(150,30);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 
     glutCreateWindow("GLUT Shapes");

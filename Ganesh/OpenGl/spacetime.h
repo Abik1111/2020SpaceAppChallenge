@@ -7,7 +7,7 @@
 class Spacetime{
 private:
     map <int,Matter> matters;
-    double dt=1;
+    double dt=6*60*60;
 
     double t;
     Vector3 position;
