@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1601444393 source:c:\users\user\documents\codeblocks\opengl\main.cpp
+1601445400 source:c:\users\user\documents\codeblocks\opengl\main.cpp
 	<GL/glut.h>
 	<stdlib.h>
 	"spacetime.h"

@@ -40,8 +40,13 @@ int physicsMain(){
 
     Matter Earth;
     Earth.setMass(6e24);
-    Earth.setPosition(Vector3::getVector(150.0e9,0,0));
+    Earth.setPosition(Vector3::getVector(149.598e9,0,0));
     Earth.setVelocity(Vector3::getVector(0,0,1).scale(29.78e3));
+
+    Matter Moon;
+    Moon.setMass(7.35e22);
+    Moon.setPosition(Vector3::getVector(149.597e9,0,0));
+    Moon.setVelocity(Vector3::getVector(0,0,1).scale(-1.022e3+24.077e3));
 
     Matter Mars;
     Mars.setMass(6.4171e23);
@@ -50,6 +55,7 @@ int physicsMain(){
 
     spacetime.addMatter(0,Sun);
     spacetime.addMatter(3,Earth);
+    spacetime.addMatter(5,Moon);
     spacetime.addMatter(4,Mars);
 
 //    for(int i=0;i<30;i++){
@@ -61,6 +67,8 @@ int physicsMain(){
     return 0;
 }
 
+double scale=3e-11;
+
 static void display(void)
 {
     spacetime.update();
@@ -69,7 +77,7 @@ static void display(void)
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity() ;
-    gluLookAt(0,9,0,0,0,0,0,0,-1);
+    gluLookAt(0,15,0,0,0,0,0,0,-1);
 
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -78,15 +86,23 @@ static void display(void)
 
     glColor3d(0,1,0);
     pos=spacetime.getMatter(3).getPosition();
-    pos=pos.scale(1e-11);
+    pos=pos.scale(scale);
     glPushMatrix();
         glTranslated(pos.getValue1(),pos.getValue2(),pos.getValue3());
         glutSolidSphere(0.3,18,18);
     glPopMatrix();
 
+    glColor3d(0,0,1);
+    pos=spacetime.getMatter(5).getPosition();
+    pos=pos.scale(scale);
+    glPushMatrix();
+        glTranslated(pos.getValue1(),pos.getValue2(),pos.getValue3());
+        glutSolidSphere(0.1,18,18);
+    glPopMatrix();
+
     glColor3d(1,0,0);
     pos=spacetime.getMatter(4).getPosition();
-    pos=pos.scale(1e-11);
+    pos=pos.scale(scale);
     glPushMatrix();
         glTranslated(pos.getValue1(),pos.getValue2(),pos.getValue3());
         glutSolidSphere(0.3,18,18);
@@ -94,7 +110,7 @@ static void display(void)
 
     glColor3d(1,1,0);
     pos=spacetime.getMatter(0).getPosition();
-    pos=pos.scale(1e-11);
+    pos=pos.scale(scale);
     glPushMatrix();
         glTranslated(pos.getValue1(),pos.getValue2(),pos.getValue3());
         glutSolidSphere(0.6,18,18);
