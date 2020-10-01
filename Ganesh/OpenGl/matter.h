@@ -11,12 +11,12 @@ private:
     Vector3 position;
     Vector3 velocity;
     Vector3 acceleration;
-    double gamma;
+    double dt;
 public:
     Matter(){
         this->setMass();
-        gamma=1.0;
         time=0.0;
+        dt=0;
     }
 
     void operator = (const Matter &m) {
@@ -25,7 +25,6 @@ public:
         this->position=m.position;
         this->velocity=m.velocity;
         this->acceleration=m.acceleration;
-        this->gamma=m.gamma;
     }
 
     //Setting values
@@ -40,13 +39,22 @@ public:
     }
 
     //updating
-    void updatePosition(double dt){
+    void updatePosition(){
         time=time+dt;
         position=position+velocity.scale(dt);
     }
 
-    void updateVelocity(double dt){
-        velocity=velocity+acceleration.scale(dt);
+    void updateVelocity(double dt,double v_mag_ship){
+        double v_mag=velocity.getMagnitude();
+        double dv=v_mag_ship-v_mag;
+        if(dv>=0){
+            dv=dv/(1-v_mag_ship*v_mag/(C*C));
+            this->dt=dt/sqrt(1-dv*dv/(C*C));
+        }else{
+            dv=dv/(1-v_mag_ship*v_mag/(C*C));
+            this->dt=dt*sqrt(1-dv*dv/(C*C));
+        }
+        velocity=velocity+acceleration.scale(this->dt);
     }
 
     void updateAcceleration(Vector3 intensity){
@@ -54,6 +62,9 @@ public:
     }
 
     //Getting values
+    double getMass(){
+        return mass;
+    }
     Vector3 getPosition(){
         return position;
     }
@@ -88,7 +99,10 @@ public:
         Vector3 dr = effectPosition-causePosition;
         double GM = G*mass;
         double r_mag=dr.getMagnitude();
-        intensity = dr.scale(-GM/(r_mag*r_mag*r_mag));
+
+        double L2=GM*r_mag/(1-3*GM/(C*C*r_mag));
+
+        intensity = dr.scale(-(GM/(r_mag*r_mag*r_mag)+3*GM*L2/(C*C*r_mag*r_mag*r_mag*r_mag*r_mag)));
 
         return intensity;
     }

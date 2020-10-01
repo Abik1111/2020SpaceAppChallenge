@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1601445400 source:c:\users\user\documents\codeblocks\opengl\main.cpp
+1601551237 source:c:\users\user\documents\codeblocks\opengl\main.cpp
 	<GL/glut.h>
 	<stdlib.h>
 	"spacetime.h"
@@ -19,11 +19,11 @@
 	<iostream>
 	"spacetime.h"
 
-1601444416 c:\users\user\documents\codeblocks\opengl\spacetime.h
+1601551320 c:\users\user\documents\codeblocks\opengl\spacetime.h
 	"matter.h"
 	<map>
 
-1601442961 c:\users\user\documents\codeblocks\opengl\matter.h
+1601542713 c:\users\user\documents\codeblocks\opengl\matter.h
 	<iostream>
 	"vector3.h"
 	<math.h>

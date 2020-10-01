@@ -32,81 +32,70 @@ const GLfloat mat_diffuse[]    = { 0.8f, 0.8f, 0.8f, 1.0f };
 const GLfloat mat_specular[]   = { 1.0f, 1.0f, 1.0f, 1.0f };
 const GLfloat high_shininess[] = { 100.0f };
 
+Matter Earth;
+Matter Mars;
 Spacetime spacetime;
 int physicsMain(){
 
     Matter Sun;
     Sun.setMass(1.9e30);
 
-    Matter Earth;
-    Earth.setMass(6e24);
+    Earth.setMass(1);
     Earth.setPosition(Vector3::getVector(149.598e9,0,0));
     Earth.setVelocity(Vector3::getVector(0,0,1).scale(29.78e3));
 
-    Matter Moon;
-    Moon.setMass(7.35e22);
-    Moon.setPosition(Vector3::getVector(149.597e9,0,0));
-    Moon.setVelocity(Vector3::getVector(0,0,1).scale(-1.022e3+24.077e3));
-
-    Matter Mars;
     Mars.setMass(6.4171e23);
     Mars.setPosition(Vector3::getVector(227.939e9,0,0));
     Mars.setVelocity(Vector3::getVector(0,0,1).scale(24.077e3));
 
     spacetime.addMatter(0,Sun);
-    spacetime.addMatter(3,Earth);
-    spacetime.addMatter(5,Moon);
-    spacetime.addMatter(4,Mars);
-
-//    for(int i=0;i<30;i++){
-//        spacetime.update();
-//        cout<<spacetime.getMatter(4).getPosition()<<endl;
-//    }
-
 
     return 0;
 }
 
+bool start=true;
+double frame=0;
 double scale=3e-11;
 
 static void display(void)
 {
+    frame++;
+    Vector3 pos;
     spacetime.update();
     const double t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
     const double a = t*90.0;
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity() ;
-    gluLookAt(0,15,0,0,0,0,0,0,-1);
+
+    gluLookAt(0,18,0,0,0,0,0,0,-1);
 
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    Vector3 pos;
-
-    glColor3d(0,1,0);
-    pos=spacetime.getMatter(3).getPosition();
-    pos=pos.scale(scale);
-    glPushMatrix();
+    if(frame>900){
+        if(start){
+            spacetime.addMatter(3,Earth);
+            spacetime.addMatter(4,Mars);
+            start=false;
+        }
+        glColor3d(0,1,0);
+        pos=spacetime.getMatter(3).getPosition();
+        pos=pos.scale(scale);
+        glPushMatrix();
         glTranslated(pos.getValue1(),pos.getValue2(),pos.getValue3());
         glutSolidSphere(0.3,18,18);
-    glPopMatrix();
+        glPopMatrix();
 
-    glColor3d(0,0,1);
-    pos=spacetime.getMatter(5).getPosition();
-    pos=pos.scale(scale);
-    glPushMatrix();
-        glTranslated(pos.getValue1(),pos.getValue2(),pos.getValue3());
-        glutSolidSphere(0.1,18,18);
-    glPopMatrix();
+        glColor3d(1,0,0);
+        pos=spacetime.getMatter(4).getPosition();
+        pos=pos.scale(scale);
+        glPushMatrix();
+            glTranslated(pos.getValue1(),pos.getValue2(),pos.getValue3());
+            glutSolidSphere(0.3,18,18);
+        glPopMatrix();
+    }
 
-    glColor3d(1,0,0);
-    pos=spacetime.getMatter(4).getPosition();
-    pos=pos.scale(scale);
-    glPushMatrix();
-        glTranslated(pos.getValue1(),pos.getValue2(),pos.getValue3());
-        glutSolidSphere(0.3,18,18);
-    glPopMatrix();
 
     glColor3d(1,1,0);
     pos=spacetime.getMatter(0).getPosition();
