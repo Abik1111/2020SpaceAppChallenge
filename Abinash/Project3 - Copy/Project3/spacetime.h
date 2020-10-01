@@ -23,6 +23,11 @@ public:
     void addMatter(int id,Matter matter){
         matters[id]=matter;
     }
+	void calculateFrequency() {
+		for (auto& m : matters) {
+			m.second.calculateFrequency(this->velocity, this->position);
+		}
+	}
 
     void update(){
         time=time+dt;
@@ -120,6 +125,9 @@ public:
 				m.second.updateTemperature(temperatureNew);
 			}
 		}
+
+		this->calculateFrequency();
+
     }
 	double calculateTemperature(Vector3 effectPosition, int id = -1) {
 		double tPower4 = 0;

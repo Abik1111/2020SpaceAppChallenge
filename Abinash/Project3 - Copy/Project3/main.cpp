@@ -49,6 +49,7 @@ int physicsMain(){
     Mars.setVelocity(Vector3::getVector(0,0,1).scale(24.077e3));
 
     spacetime.addMatter(0,Sun);
+	//spacetime.addMatter(1, Earth);
 
     return 0;
 }

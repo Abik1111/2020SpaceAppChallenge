@@ -16,6 +16,8 @@ private:
     Vector3 velocity;
     Vector3 acceleration;
 	double gamma;
+	double realFrequency;
+	double effFrequency;
 
     double dt;
 public:
@@ -184,6 +186,15 @@ public:
         return intensity;
     }
 
+	void calculateFrequency(Vector3 receiverVel, Vector3 receiverPos) {
+		double initialDist = (receiverPos - this->position).getMagnitude();
+		double finalDist = (receiverPos + receiverVel.scale(0.1) - this->position - this->velocity.scale(0.1)).getMagnitude();
+		double beta = (receiverVel - velocity).getMagnitude();
+		if (finalDist < initialDist){
+			beta = -beta;
+		}
+		this->effFrequency = sqrt((1 - beta) / (1 + beta))*realFrequency;
+	}
 
 
 };
