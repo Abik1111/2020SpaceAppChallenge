@@ -12,6 +12,7 @@ private:
 	double emissivity;
 	double radius;
 	bool blackBody;
+	bool blackHole=false;
     Vector3 position;
     Vector3 velocity;
     Vector3 acceleration;
@@ -26,7 +27,7 @@ public:
 		this->setEmissivity(1);
 		blackBody = false;
 		this->setTemperature(273);
-
+		this->blackHole = false;
         time=0.0;
         dt=0;
     }
@@ -42,11 +43,13 @@ public:
 		this->temperature = m.temperature;
 		this->emissivity = m.emissivity;
 		this->blackBody = m.blackBody;
+		this->blackHole = m.blackHole;
     }
 
     //Setting values
     void setMass(double mass=1){
         this->mass=mass;
+		this->setBlackHole();
     }
     void setPosition(Vector3 position){
        this->position.setValue(position);
@@ -56,6 +59,7 @@ public:
     }
 	void setRadius(double radius) {
 		this->radius = radius;
+		this->setBlackHole();
 	}
 	void setEmissivity(double emissivity) {
 		this->emissivity = emissivity;
@@ -65,6 +69,14 @@ public:
 	}
 	void setBlackBody(bool isBlackBody) {
 		this->blackBody = isBlackBody;
+	}
+	void setBlackHole() {
+		if ((2 * G*this->mass) / (C*C) > this->radius) {
+			this->blackHole = true;
+		}
+		else {
+			this->blackHole = false;
+		}
 	}
     //updating
     void updatePosition(){
@@ -112,6 +124,9 @@ public:
     Vector3 getPosition(){
         return position;
     }
+	bool isBlackHole() {
+		return this->blackHole;
+	}
 
 	double calculateTemperature(Vector3 effectPosition) {
 		double tPower4 = 0;
