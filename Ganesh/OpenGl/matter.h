@@ -2,19 +2,30 @@
 #include "vector3.h"
 #include <math.h>
 #include "constant.h"
+
 using namespace std;
 
 class Matter{
 private:
     double mass;
     double time;
+	double temperature;
+	double emissivity;
+	double radius;
+	bool blackBody;
     Vector3 position;
     Vector3 velocity;
     Vector3 acceleration;
+	double gamma;
+
     double dt;
 public:
     Matter(){
         this->setMass();
+		this->setEmissivity(1);
+		blackBody = false;
+		this->setTemperature(273);
+
         time=0.0;
         dt=0;
     }
@@ -25,6 +36,11 @@ public:
         this->position=m.position;
         this->velocity=m.velocity;
         this->acceleration=m.acceleration;
+		this->gamma = m.gamma;
+		this->radius = m.radius;
+		this->temperature = m.temperature;
+		this->emissivity = m.emissivity;
+		this->blackBody = m.blackBody;
     }
 
     //Setting values
@@ -37,7 +53,18 @@ public:
     void setVelocity(Vector3 velocity){
         this->velocity.setValue(velocity);
     }
-
+	void setRadius(double radius) {
+		this->radius = radius;
+	}
+	void setEmissivity(double emissivity) {
+		this->emissivity = emissivity;
+	}
+	void setTemperature(double temp) {
+		this->temperature = temp;
+	}
+	void setBlackBody(bool isBlackBody) {
+		this->blackBody = isBlackBody;
+	}
     //updating
     void updatePosition(){
         time=time+dt;
@@ -60,15 +87,69 @@ public:
     void updateAcceleration(Vector3 intensity){
         acceleration=intensity;
     }
+	void updateTemperature(double temperature) {
+		this->temperature = temperature;
+
+	}
 
     //Getting values
     double getMass(){
         return mass;
     }
+	double getRadius() {
+		return radius;
+	}
+	double getEmissivity() {
+		return this->emissivity;
+	}
+	double getTemperature() {
+		return temperature;
+	}
+	bool isBlackBody() {
+		return blackBody;
+	}
     Vector3 getPosition(){
         return position;
     }
+    double getTime(){
+        return time;
+    }
 
+	double calculateTemperature(Vector3 effectPosition) {
+		double tPower4 = 0;
+
+		double a = (1 - (velocity.getValue1()*velocity.getValue1() + velocity.getValue2()*velocity.getValue2() +
+			velocity.getValue3()*velocity.getValue3()) / (C*C));
+		double b = -2.0*(time - (velocity.getValue1()*effectPosition.getValue1() + velocity.getValue2()*effectPosition.getValue2() +
+			velocity.getValue3()*effectPosition.getValue3()) / (C*C));
+		double c = (time*time - (effectPosition.getValue1()*effectPosition.getValue1() + effectPosition.getValue2()*effectPosition.getValue2()
+			+ effectPosition.getValue3()*effectPosition.getValue3()) / (C*C));
+
+		double temp = sqrt(b*b - 4.0*a*c);
+
+		if (temp < 0.0) {
+			return tPower4;
+		}
+		double t = (-b - temp) / (2.0*a);
+
+		if (t < 0.0) {
+			t = (-b + temp) / (2.0*a);
+		}
+		if (t > time) {
+			return tPower4;
+		}
+
+		double dt = time - t;
+
+		Vector3 causePosition = position - Vector3::getVector(velocity.getValue1()*dt, velocity.getValue2()*dt, velocity.getValue3()*dt);
+		Vector3 dr = effectPosition - causePosition;
+		double drMag = dr.getMagnitude();
+		//cout << temperature << endl;
+		tPower4 = emissivity * (radius*radius*temperature*temperature*temperature*temperature) / (4 * drMag*drMag);
+		//cout << tPower4 << endl;
+
+		return tPower4;
+	}
     Vector3 getGravitationalField(Vector3 effectPosition){
         Vector3 intensity;
 
@@ -102,7 +183,7 @@ public:
 
         double L2=GM*r_mag/(1-3*GM/(C*C*r_mag));
 
-        intensity = dr.scale(-(GM/(r_mag*r_mag*r_mag)+3*GM*L2/(C*C*r_mag*r_mag*r_mag*r_mag*r_mag)));
+        intensity = dr.scale(-(GM/(r_mag*r_mag*r_mag)/*-L2/(r_mag*r_mag*r_mag*r_mag)*/+3*GM*L2/(C*C*r_mag*r_mag*r_mag*r_mag*r_mag)));
 
         return intensity;
     }
@@ -110,4 +191,3 @@ public:
 
 
 };
-

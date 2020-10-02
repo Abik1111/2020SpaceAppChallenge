@@ -4,8 +4,8 @@
 #include <iostream>
 #include <math.h>
 
-//#ifndef HEADER_FILE
-//#define HEADER_FILE
+#ifndef HEADER_FILE
+#define HEADER_FILE
 
 using namespace std;
 
@@ -130,6 +130,6 @@ public:
          return out;
     }
 };
-//#endif
+#endif
 
 

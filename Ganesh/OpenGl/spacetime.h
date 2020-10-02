@@ -4,10 +4,13 @@
 #include "matter.h"
 #include <map>
 
+#define N 3
+
 class Spacetime{
 private:
+    double grid[N][N][N][3];
     map <int,Matter> matters;
-    double dt=1;//4*60*60;
+	double dt =0.5*60*60;
     double gravDilFactor;
     double time;
     Vector3 position;
@@ -15,9 +18,10 @@ private:
 public:
     Spacetime(){
         time=0;
-        position.setValue(-2.81622223e3,0,0);//81622223e3
+        position.setValue(200e9,0,0);//(-2.81622223e3,0,0);//81622223e3
         //velocity.setValue(0.999*C,0,0);
         gravDilFactor=1;
+
     }
 
     void addMatter(int id,Matter matter){
@@ -27,7 +31,10 @@ public:
     void update(){
         time=time+dt;
         Vector3 intensity;
-
+		double temperatureNew;
+		double tPower4 = 0.0;
+		double radius;
+		double emissivity;
         double v_mag_ship=velocity.getMagnitude();
         //acceleration update
         for (auto& m: matters) {
@@ -109,9 +116,46 @@ public:
         for (auto& m: matters) {
             m.second.updatePosition();
         }
+		for (auto& m : matters) {
+			if (!m.second.isBlackBody()) {
+				tPower4 = this->calculateTemperature(m.second.getPosition(), m.first);
+				emissivity = m.second.getEmissivity();
+				temperatureNew = sqrt(sqrt(emissivity*tPower4));
+				m.second.updateTemperature(temperatureNew);
+			}
+		}
+    }
+    void gridUpdate(double init_x,double init_y,double init_z,double gridLength){
+        double scale=1,x,y,z;
+        Vector3 intensity;
+        for(int i=0;i<N;i++){
+            for(int j=0;j<N;j++){
+                for(int k=0;k<N;k++){
+                    x=init_x+i*gridLength;
+                    y=init_y+j*gridLength;
+                    z=init_z+k*gridLength;
+                    intensity = getGravitationalField(Vector3::getVector(x,y,z));
+                    x+=scale*intensity.getValue1();
+                    y+=scale*intensity.getValue2();
+                    z+=scale*intensity.getValue3();
+                    grid[i][j][k][0]=x;
+                    grid[i][j][k][1]=y;
+                    grid[i][j][k][2]=z;
+                }
+            }
+        }
     }
 
     //Getting
+	double calculateTemperature(Vector3 effectPosition, int id = -1) {
+		double tPower4 = 0;
+		for (auto& m : matters) {
+			if (id != m.first) {
+				tPower4 = tPower4 + m.second.calculateTemperature(effectPosition);
+			}
+		}
+		return tPower4;
+	}
     Vector3 getGravitationalField(Vector3 effectPosition,int id=-1){
         Vector3 intensity;
         gravDilFactor=0;
@@ -122,10 +166,19 @@ public:
         }
         return intensity;
     }
-
     Matter getMatter(int id){
         Matter m = matters.at(id);
         return m;
     }
-
+    void getGrid(double grid[N][N][N][3]){
+         for(int i=0;i<N;i++){
+            for(int j=0;j<N;j++){
+                for(int k=0;k<N;k++){
+                    grid[i][j][k][0]=this->grid[i][j][k][0];
+                    grid[i][j][k][1]=this->grid[i][j][k][1];
+                    grid[i][j][k][2]=this->grid[i][j][k][2];
+                }
+            }
+        }
+    }
 };
