@@ -8,7 +8,7 @@ out vec2 v_TexCoord;
 
 void main()
 {
-    gl_Position = vec4(position, 0.0, 1.0);
+    gl_Position = vec4(position, -1.0, 1.0);
     v_TexCoord = texCord;
 }
 
@@ -25,7 +25,7 @@ out vec4 color;
 
 void main()
 {
-    color = texture(u_slot, v_TexCoord);
-    if(color.a < 0.1)
+    //color = texture(u_slot, v_TexCoord);
+    //if(color.a < 0.1)
         discard;
 }

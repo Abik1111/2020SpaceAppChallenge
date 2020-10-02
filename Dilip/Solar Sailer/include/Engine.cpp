@@ -194,11 +194,8 @@ namespace OpenGL{
             std::ifstream stream(filePath.c_str());
             int type = NONE;
 
-            if(stream == NULL){
-                std::cout << "Cannot Read File" << std::endl;
-            }
-
-            while(getline(stream, line) != NULL){
+            while(!stream.eof()){
+                getline(stream, line);
                 //If shader definition is found
                 if(line.find("#shader") != std::string::npos){
                     //If that is vertex shader
@@ -679,6 +676,7 @@ namespace OpenGL{
     public:
         /**
         *Must be called initially when frame buffer is to be initialized
+        *You must attach depth texture even if we are not using to use depth test
         */
         void generateFrameBuffer(bool colorAttachMent = true){
             GLCall(glGenFramebuffers(1, &m_rendererID));
@@ -1077,11 +1075,8 @@ private:
 
         std::vector<unsigned int> indices;
 
-        if(stream == NULL){
-            std::cout << "Cannot Read File" << std::endl;
-        }
-
-        while(getline(stream, line) != NULL){
+        while(!stream.eof()){
+                getline(stream, line);
             std::string type;
             std::stringstream ss_datas(line);
             ss_datas >> type;
@@ -1228,11 +1223,8 @@ private:
 
         std::vector<unsigned int> indices;
 
-        if(stream == NULL){
-            std::cout << "Cannot Read File" << std::endl;
-        }
-
-        while(getline(stream, line) != NULL){
+        while(!stream.eof()){
+            getline(stream, line);
             std::string type;
             std::stringstream ss_datas(line);
             ss_datas >> type;
@@ -1433,8 +1425,7 @@ private:
         return positions;
     }
 
-    void loadIsocaSphereVertices(float radius, unsigned int subdivision)
-    {
+    void loadIsocaSphereVertices(float radius, unsigned int subdivision){
         std::vector<glm::vec3> positions = calculateIcosahedronPositions(radius);
         std::vector<SimpleVertex> vertices;
         for(unsigned int i=0; i<12; i++){
@@ -1646,6 +1637,7 @@ private:
                 vertices.push_back(vertex);
             }
         }
+        //Positive z face
         for(unsigned int i=0; i<=segment; i++){
             for(unsigned int j=0; j<=segment; j++){
                 vertex.normal = glm::normalize(glm::vec3(-10.0+j*segment_size, -10.0+i*segment_size, 10.0));
@@ -1751,7 +1743,6 @@ private:
     OpenGL::VertexBuffer vb;
     OpenGL::CubeMap cm;
     OpenGL::Shader shader;
-    static const float DEFAULT_ROTATION_SPEED = 0.0075;
     float rotation = 0.0;
 public:
 
@@ -1833,7 +1824,7 @@ public:
     /**
     *Increase the rotation value of the sky-box
     */
-    void increaseRotation(float delta = DEFAULT_ROTATION_SPEED){
+    void increaseRotation(float delta = 0.0075){
         rotation += delta;
         if(rotation >=360)
             rotation = 0.0;
@@ -1888,7 +1879,7 @@ struct TerrainVertex{
 */
 class Terrain{
     private:
-        static const float maxHeight = 20.0f;
+        float maxHeight;
         float x_scaling;//Scaling of texture with actual terrain data
         float z_scaling;//Scaling of texture with actual terrain data
         float gridSize;//Contains grid of size grid-size
@@ -1977,6 +1968,8 @@ class Terrain{
         }
 
     public:
+        Terrain():maxHeight(20.0f){}
+
         /**
         *Loads terrain from passed data
         *@param shaderLocation: file location of terrain shader
@@ -2187,6 +2180,152 @@ public:
     }
 };
 
+class PlanetChunk{
+private:
+    Image heightMap;
+    OpenGL::VertexBuffer vb;
+    OpenGL::VertexArray va;
+    OpenGL::IndexBuffer ib;
+    float radius;
+    float chunk_size;
+    float max_height;
+    unsigned int segment;
+    float zero_r_value;
+
+    float getValueAt(glm::vec2 texCor){
+        int x = texCor.x*(heightMap.getWidth()-1);
+        int y = texCor.y*(heightMap.getHeight()-1);
+        PixelData pixel = heightMap.getPixelAt(x, y);
+        return (pixel.r-zero_r_value)/(255.0-zero_r_value);
+    }
+
+    void recalculateUv(glm::vec2 &texCor){
+        if(texCor.y>0.66){
+            if(texCor.x>0.5 && texCor.x<0.75){
+                float corner_x = texCor.x-0.5;
+                float corner_y = texCor.y-0.66;
+                corner_x = corner_x*0.33/0.25;
+                corner_y = corner_y*0.25/0.33;
+                texCor.x = 0.5-corner_y;
+                texCor.y = 0.66+corner_x;
+            }
+            else if(texCor.x<0.25){
+                float corner_x = texCor.x;
+                float corner_y = texCor.y-0.66;
+                corner_x = corner_x*0.33/0.25;
+                corner_y = corner_y*0.25/0.33;
+                texCor.x = 0.25+corner_y;
+                texCor.y = 1-corner_x;
+            }
+            else if(texCor.x>0.75){
+                float corner_x = texCor.x-0.75;
+                float corner_y = texCor.y-0.66;
+                texCor.x = 0.5-corner_x;
+                texCor.y = 1.0-corner_y;
+            }
+        }
+        else if(texCor.y<0.33){
+            if(texCor.x>0.5 && texCor.x<0.75){
+                float corner_x = texCor.x-0.5;
+                float corner_y = 0.33-texCor.y;
+                corner_x = corner_x*0.33/0.25;
+                corner_y = corner_y*0.25/0.33;
+                texCor.x = 0.5-corner_y;
+                texCor.y = 0.33-corner_x;
+            }
+            else if(texCor.x<0.25){
+                float corner_x = texCor.x;
+                float corner_y = 0.33-texCor.y;
+                corner_x = corner_x*0.33/0.25;
+                corner_y = corner_y*0.25/0.33;
+                texCor.x = 0.25+corner_y;
+                texCor.y = 1-corner_x;
+            }
+            else if(texCor.x>0.75){
+                float corner_x = texCor.x-0.75;
+                float corner_y = 0.33-texCor.y;
+                texCor.x = 0.5-corner_x;
+                texCor.y = corner_y;
+            }
+        }
+    }
+
+    glm::vec2 getPosUv(float rotation, glm::vec2 texCor){
+        texCor.x -= (rotation/(360.0));
+        if(texCor.x<0){
+            texCor.x+=1.0;
+        }
+
+
+        //Making sure that texture is always inside cube texture
+        //recalculateUv(texCor);
+
+        return glm::vec2(texCor.x, texCor.y);
+    }
+
+public:
+    void loadPlanetChunk(float radius, float chunk_angle, float max_height, unsigned int segment, std::string heightMapLocation, float zero_r){
+        this->radius = radius;
+        this->chunk_size = chunk_angle*20.0/90.0;
+        this->segment = segment;
+        this->max_height = max_height;
+        this->zero_r_value = zero_r;
+        heightMap.loadImage(heightMapLocation);
+
+        vb.allocateDynamically((segment+1)*(segment+1)*sizeof(SimpleVertex));
+        OpenGL::VertexBufferLayout vbl;
+        va.generateVertexArray();
+        vbl.pushFloat(3);
+        vbl.pushFloat(3);
+        vbl.pushFloat(2);
+        va.addBuffer(vb, vbl);
+
+        std::vector<unsigned int> indices;
+        for(unsigned int i=0; i<segment; i++){
+            for(unsigned int j=0; j<segment; j++){
+               indices.push_back(i*(segment+1)+j);
+               indices.push_back(i*(segment+1)+j+1);
+               indices.push_back(i*(segment+1)+j+segment+2);
+
+               indices.push_back(i*(segment+1)+j);
+               indices.push_back(i*(segment+1)+j+segment+2);
+               indices.push_back(i*(segment+1)+j+segment+1);
+            }
+        }
+        ib.loadData(&indices[0], indices.size());
+    }
+
+    void update(float rotation, glm::vec3 rot_axis, glm::vec3 pos_in_sphere_axis){
+        glm::mat4 inverseSphereLocalSpace = glm::rotate(glm::mat4(1.0), glm::radians(-rotation), rot_axis);
+        pos_in_sphere_axis = glm::vec3(glm::vec4(pos_in_sphere_axis, 1.0)*inverseSphereLocalSpace);
+        pos_in_sphere_axis = glm::normalize(pos_in_sphere_axis);
+        glm::vec3 difference = pos_in_sphere_axis - glm::vec3(1.0, 0.0, 0.0);
+
+        float segment_size = chunk_size/segment;
+        float offset = 10.0-chunk_size/2.0;
+        std::vector<SimpleVertex> vertices;
+        SimpleVertex vertex;
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                glm::vec2 texCor = glm::vec2(0.25+0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment);
+                texCor = getPosUv(rotation, texCor);
+                vertex.normal = glm::normalize(glm::vec3(10.0, -10.0+i*segment_size+offset, 10.0-j*segment_size-offset));
+                vertex.position = (getValueAt(texCor)*max_height+radius)*vertex.normal;
+                vertex.texCoords = texCor;
+                vertices.push_back(vertex);
+            }
+        }
+        vb.feedDatatoAllocated(&vertices[0], vertices.size()*sizeof(SimpleVertex));
+    }
+
+    void draw(OpenGL::Shader shader){
+        shader.bind();
+        va.bind();
+        ib.bind();
+        GLCall(glDrawElements(GL_TRIANGLES, ib.getCount(), GL_UNSIGNED_INT, NULL));
+    }
+};
+
 class Planet{
 private:
     Sphere sphere;
@@ -2226,9 +2365,9 @@ public:
         glm::mat4 model=glm::mat4(1.0f);
         model = glm::translate(model, position);
         model = glm::rotate(model, glm::radians(rotation), rotation_axis);
+        shader.bind();
         shader.addUniformMat4f("u_model", model);
         model = viewProjection*model;
-        shader.bind();
         shader.addUniformMat4f("u_MVP", model);
         texture.bind();
         sphere.draw(shader);
@@ -2251,26 +2390,20 @@ public:
 class PlanetInClose{
 private:
     BumpySphere sphere;
+    //PlanetChunk chunk;
     OpenGL::Texture diffusetexture;
     glm::vec3 position;
     float rotation;
     glm::vec3 rotation_axis;
     glm::vec3 velocity;
 
-    void saveToFile(std::string destination){
-        //Save the data to the file
-    }
-
-    void loadFromFile(std::string source){
-        //Load data from file specifying minimum data
-    }
-
 public:
-    void loadPlanet(float radius, std::string textureLocation, std::string bumpMap){
+    void loadPlanet(float radius, unsigned int segments, float maxHeight, std::string textureLocation, std::string bumpMap, float r_offset = 0){
         rotation_axis = glm::vec3(0,1,0);
         rotation = 0.0;
         diffusetexture.loadTexture(textureLocation);
-        sphere.loadVertices(radius, 0.1f, bumpMap, 256);
+        sphere.loadVertices(radius, maxHeight, bumpMap, segments);
+        //chunk.loadPlanetChunk(radius, chunkSize, maxHeight, chunk_segments, bumpMap, r_offset);
     }
 
     void setRotaion(float rot){
@@ -2295,12 +2428,17 @@ public:
         glm::mat4 model=glm::mat4(1.0f);
         model = glm::translate(model, position);
         model = glm::rotate(model, glm::radians(rotation), rotation_axis);
+
+        shader.bind();
         shader.addUniformMat4f("u_model", model);
         model = viewProjection*model;
-        shader.bind();
         shader.addUniformMat4f("u_MVP", model);
         diffusetexture.bind();
         sphere.draw(shader);
+    }
+
+    glm::vec3 getPosition(){
+        return position;
     }
 
     void cleanUp(){
@@ -2313,7 +2451,10 @@ class Spaceship{
 private:
     glm::vec3 position;
     glm::vec3 direction;
-    const float velocity = 0.020f;
+    glm::dvec3 acceleration;
+//    const double acceleration_mag = 1e6;//Acceleration is in space-time reference
+    float yaw;
+    float pitch;
     ObjMesh body;
     OpenGL::Texture texture;
 
@@ -2324,7 +2465,6 @@ public:
 
     void setDirection(glm::vec3 dir){
         if(dir.x==0.0 && dir.y==0.0 && dir.z==0.0){
-            direction = glm::vec3(0.0);
             return;
         }
         direction = glm::normalize(dir);
@@ -2338,19 +2478,27 @@ public:
         return direction;
     }
 
+    float getYaw(){
+        return yaw;
+    }
+
+    float getPitch(){
+        return pitch;
+    }
+
     void loadFiles(std::string objPath, std::string texturePath, float scaling = 1){
         body.loadFile(objPath, scaling);
         texture.loadTexture(texturePath);
     }
 
     void moveForward(){
-        position += velocity*direction;
+        this->acceleration = 9.0/60.0*glm::dvec3(this->direction);
     }
 
-    void moveBackward(){
-        position -= velocity*direction;
+    glm::dvec3 getAcceleration(){
+        return this->acceleration;
     }
-
+/**
     void moveRight(glm::vec3 upVec = glm::vec3(0.0, 1.0, 0.0)){
         glm::vec3 right = glm::normalize(glm::cross(direction, upVec));
         position += velocity*right;
@@ -2360,9 +2508,16 @@ public:
         glm::vec3 right = glm::normalize(glm::cross(direction, upVec));
         position -= velocity*right;
     }
+*/
+    void draw(OpenGL::Shader shader, glm::mat4 viewProj){
+		glm::mat4 model = glm::mat4(1.0);
+		model = glm::translate(model, position);
+        model = model*glm::inverse(glm::lookAt(glm::vec3(0.0, 0.0, 0.0), direction, glm::vec3(0.0, 1.0, 0.0)));
+		glm::mat4 mvp = viewProj*model;
 
-    void draw(OpenGL::Shader shader){
         shader.bind();
+        shader.addUniformMat4f("u_model", model);
+        shader.addUniformMat4f("u_MVP", mvp);
         texture.bind();
         body.bindArray();
         GLCall(glDrawArrays(GL_TRIANGLES, 0, body.getVertexCount()));
@@ -2374,6 +2529,10 @@ public:
     }
 };
 
+/**
+*Please consider initializing shader as OpenGL::Shader GUI::shader;
+*You should use specify shader as GUI::specifyShader(shaderLocation);
+*/
 class GUI{
 private:
     static OpenGL::Shader shader;
@@ -2430,6 +2589,99 @@ public:
         ib.deleteIndexBuffer();
         vb.deleteVertexBuffer();
         texture.deleteTexture();
+    }
+};
+
+/**
+*Vertex Data type of vertex containing only Position, UV & ID
+*/
+struct PosUvID{
+    glm::vec2 position;
+    glm::vec2 uv;
+    unsigned int id;
+};
+
+//TODO: Complete the lens flare calculations
+class LensFlare{
+private:
+    OpenGL::Shader shader;
+    OpenGL::VertexArray va;
+    OpenGL::VertexBuffer vb;
+    std::vector<OpenGL::Texture> textures;
+    std::vector<glm::vec2> gui_sizes;
+    float spacing;
+    bool flareActive;
+
+public:
+    void load(std::vector<glm::vec2> gui_sizes, float spacing, std::vector<std::string> textureLocations, std::string shaderLocation){
+        this->gui_sizes = gui_sizes;
+        this->spacing = spacing;
+        flareActive = false;
+        //Allocating the memory for every GUIs to be drawn
+        vb.allocateDynamically(4*gui_sizes.size()*sizeof(PosUvID));
+        OpenGL::VertexBufferLayout layout;
+        layout.pushFloat(2);
+        layout.pushFloat(2);
+        va.generateVertexArray();
+        va.addBuffer(vb, layout);
+
+        //Loading the textures for each quads
+        for(unsigned int i=0; i<textureLocations.size(); i++){
+            OpenGL::Texture texture;
+            texture.loadTexture(textureLocations[i]);
+            textures.push_back(texture);
+        }
+
+        //Specifying the shader
+        shader.loadShader(shaderLocation);
+    }
+
+    void updateBuffers(glm::vec3 lightPosition, glm::mat4 viewProj){
+        //Position of light in normalized device space
+        flareActive = true;
+        glm::vec4 lightInNds = viewProj*glm::vec4(lightPosition, 1.0);
+        if(lightInNds.w<=0){
+            flareActive = false;
+            return;
+        }
+        lightInNds /= lightInNds.w;
+
+        //Distance of light in normalized device space to calculate the brightness
+        float distance_from_centr = sqrt(lightInNds.x*lightInNds.x+lightInNds.y*lightInNds.y);
+        float brightness = (1-distance_from_centr)/(1+3*distance_from_centr);
+
+
+        for(unsigned int i=0; i<gui_sizes.size(); i++){
+            glm::vec3 direction= -glm::vec3(lightInNds);
+            //Position of each flare  = sunPosition+i*spacing*direction
+        }
+
+
+        //Calculate the position of light in normalized screen co-ordinate space
+        //Recalculate the buffers and load the data
+    }
+
+    void draw(){
+        if(!flareActive){
+            return;
+        }
+
+        shader.bind();
+        for(unsigned int i=0; i<textures.size(); i++){
+            textures[i].bind(i);
+        }
+        va.bind();
+        GLCall(glDrawArrays(GL_QUADS, 0, 4*gui_sizes.size()));
+    }
+
+    void cleanUP(){
+        va.deleteVertexArray();
+        vb.deleteVertexBuffer();
+        for(unsigned int i=0; i<textures.size(); i++){
+            textures[i].deleteTexture();
+        }
+        textures.clear();
+        shader.deleteShader();
     }
 };
 
@@ -2548,11 +2800,14 @@ namespace Tools{
         glm::vec3 position;
         glm::vec3 camDirection;
         float yaw = 0.0;
-        float pitch = 15.0;
-        float roll = 0.0;
+        float pitch = 0.0;
+
+        float old_yaw;
+        float old_pitch;
+
+        float dot_product;
         const float sensitivity = 0.125f;
         const float MAX_DISTANCE = 4.0f;
-        //const float MAX_DISTANCE = 20.0f;
         const float MIN_DISTANCE = 0.0f;
         float distance = MAX_DISTANCE;
 
@@ -2573,6 +2828,10 @@ namespace Tools{
         }
 
     public:
+        void setFov(float angle){
+            dot_product = cos(glm::radians(angle));
+        }
+
         void setYaw(float yaw){
             this->yaw = yaw;
         }
@@ -2596,9 +2855,12 @@ namespace Tools{
             recalculateDistance();
         }
 
-
         void setPosition(glm::vec3 pos){
             position = pos;
+        }
+
+        void setDirection(glm::vec3 dir){
+            camDirection = dir;
         }
 
         glm::vec3 getPosition(){
@@ -2618,6 +2880,32 @@ namespace Tools{
             position = ship.getPosition();
             camDirection = glm::vec3(x_offset, vertical, z_offset);
             camDirection = glm::normalize(camDirection);
+
+            if(glm::dot(camDirection, -ship.getDirection())<dot_product){
+                pitch = old_pitch;
+                float horizontal = cos(glm::radians(pitch));
+                float vertical = sin(glm::radians(pitch));
+                float x_offset = horizontal*sin(glm::radians(yaw));
+                float z_offset = horizontal*cos(glm::radians(yaw));
+
+                position = ship.getPosition();
+                camDirection = glm::vec3(x_offset, vertical, z_offset);
+                camDirection = glm::normalize(camDirection);
+            }
+            if(glm::dot(camDirection, -ship.getDirection())<dot_product){
+                yaw = old_yaw;
+                float horizontal = cos(glm::radians(pitch));
+                float vertical = sin(glm::radians(pitch));
+                float x_offset = horizontal*sin(glm::radians(yaw));
+                float z_offset = horizontal*cos(glm::radians(yaw));
+
+                position = ship.getPosition();
+                camDirection = glm::vec3(x_offset, vertical, z_offset);
+                camDirection = glm::normalize(camDirection);
+            }
+
+            old_yaw = yaw;
+            old_pitch = pitch;
         }
 
         glm::mat4 getViewMatrix(glm::vec3 upVector = glm::vec3(0.0, 1.0, 0.0)){
@@ -2894,5 +3182,219 @@ namespace Tools{
         int getCountedFPS(){
             return countedFPS;
         }
+    };
+
+    /**
+    *For post process if input is from single texture
+    */
+    class PostProcess{
+    protected:
+        OpenGL::FrameBuffer fb;
+        OpenGL::Texture colorTexture;
+        OpenGL::Shader shader;
+        OpenGL::VertexArray va;
+        OpenGL::VertexBuffer vb;
+        int width, height;
+
+    public:
+        /**
+        *@param width and height is resolution of depth texture in pixels
+        *@param light direction is direction of light from where shadow to be mapped
+        */
+        void loadData(int width, int height, int screenWidth, int screenHeight, std::string shaderLocation, bool useDepthAttachment = true){
+            this->width = width;
+            this->height = height;
+            fb.generateFrameBuffer();
+            fb.bind(width, height);
+            fb.AttachColorTexture(width, height);
+            colorTexture.loadCreatedTexture(fb.AttachColorTexture(width, height));
+            if(useDepthAttachment){ fb.AttachDepthTexture(width, height);}
+            fb.unbind(screenWidth, screenHeight);
+            shader.loadShader(shaderLocation);
+            shader.bind();
+            shader.addUniform1i("u_width", width);
+            shader.addUniform1i("u_height", height);
+
+            //Creating the triangle covering full screen
+            std::vector<glm::vec2> vertices;
+            vertices.push_back(glm::vec2(-1.0, -1.0));
+            vertices.push_back(glm::vec2( 1.0, -1.0));
+            vertices.push_back(glm::vec2( 1.0,  1.0));
+            vertices.push_back(glm::vec2(-1.0,  1.0));
+
+            //Adding the data to buffer
+            vb.loadData(&vertices[0], 2*sizeof(float)*vertices.size());
+            va.generateVertexArray();
+            OpenGL::VertexBufferLayout vbl;
+            vbl.pushFloat(2);
+            va.addBuffer(vb, vbl);
+        }
+
+        /**
+        *All drawing after sampling will have shadow
+        */
+        void startSampling(){
+            fb.bind(width, height);
+        }
+
+        /**
+        *Stops shadow sampling and draws in the screen
+        */
+        void stopSampling(int screenWidth, int screenHeight){
+            fb.unbind(screenWidth, screenHeight);
+        }
+
+        /**
+        *Bind other texture before using other
+        */
+        void drawProcessed(){
+            shader.bind();
+            shader.addUniform1i("u_slot", 0);
+            colorTexture.bind();
+            va.bind();
+            GLCall(glDrawArrays(GL_QUADS, 0, 4));
+        }
+
+        void bindColorTexture(unsigned int slot){
+            colorTexture.bind(slot);
+        }
+
+        void addUniform1fToShader(std::string name, float value){
+            shader.bind();
+            shader.addUniform1f(name, value);
+        }
+
+        void cleanUp(){
+            fb.deleteBuffer();
+            vb.deleteVertexBuffer();
+            va.deleteVertexArray();
+            colorTexture.deleteTexture();
+        }
+    };
+
+    class DoubleSlotPostProcess:public PostProcess{
+    public:
+        void drawProcessed(){
+            shader.bind();
+            shader.addUniform1i("u_slot0", 0);
+            shader.addUniform1i("u_slot1", 1);
+            colorTexture.bind();
+            va.bind();
+            GLCall(glDrawArrays(GL_QUADS, 0, 4));
+        }
+    };
+
+    /**
+    *If you want to use multiple post processing
+    *You can use post processor to process all sequence by sequence
+    */
+    class PostProcessor{
+    private:
+        std::vector<PostProcess> postProcesses;
+        Renderer renderer;
+    public:
+        void setPostprocessing(std::vector<std::string> processingshaders, int width, int height, int screenWidth, int screenHeight){
+            for(unsigned int i=0; i<processingshaders.size(); i++){
+                bool attachDepth = (i==0)?true:false;
+                PostProcess process;
+                process.loadData(width, height, screenWidth, screenHeight, processingshaders[i], attachDepth);
+                postProcesses.push_back(process);
+            }
+        }
+
+        void startPostProcessing(){
+            postProcesses[0].startSampling();
+            renderer.clear();
+        }
+
+        void stopPostProcessing(int screenWidth, int screenHeight){
+            postProcesses[0].stopSampling(screenWidth, screenHeight);
+            for(unsigned int i=1; i<postProcesses.size(); i++){
+                renderer.clear();
+                postProcesses[i].startSampling();
+                    postProcesses[i-1].drawProcessed();
+                postProcesses[i].stopSampling(screenWidth, screenHeight);
+            }
+        }
+
+        void drawFinalProcessed(){
+            postProcesses[postProcesses.size()-1].drawProcessed();
+        }
+
+        unsigned int getNoOfProcesses(){
+            return postProcesses.size();
+        }
+
+        void bindColorTexture(int index, int slot){
+            postProcesses[index].bindColorTexture(slot);
+        }
+    };
+
+    class BloomPostProcessor{
+    private:
+        PostProcessor postProcessor;//Does series of post processing
+        DoubleSlotPostProcess bloomProcess;//Renders the scene for final
+        PostProcess normalProcess;//Renders the scene
+        Renderer renderer;
+        bool glowSpecified;
+
+    public:
+
+        /**
+        *Shader location order:  Dummy , brightFilter,Horizontal blur, Vertical blur, bloom
+        *
+        */
+        void load(int width, int height, int screenWidth, int screenHeight, std::vector<std::string> Shaderlocations, float brightness){
+            normalProcess.loadData(width, height, screenWidth, screenHeight, Shaderlocations[0]);
+            bloomProcess.loadData(width, height, screenWidth, screenHeight, Shaderlocations[Shaderlocations.size()-1]);
+            bloomProcess.addUniform1fToShader("u_brightness", brightness);
+
+            std::vector<std::string> processLocations;
+            for(unsigned int i=0 ; i<(Shaderlocations.size()-1); i++){
+                processLocations.push_back(Shaderlocations[i]);
+            }
+            postProcessor.setPostprocessing(processLocations, width/2, height/2, screenWidth, screenHeight);
+        }
+
+        void startSampling(bool specifyGlow = false){
+            glowSpecified = specifyGlow;
+            normalProcess.startSampling();
+            renderer.clear();
+        }
+
+        void stopSampling(int screenWidth, int screenHeight){
+            normalProcess.stopSampling(screenWidth, screenHeight);
+        }
+
+        void startGlowingSampling(){
+            glowSpecified = true;
+            postProcessor.startPostProcessing();
+            renderer.clear();
+        }
+
+        void stopGlowSampling(int screenWidth, int screenHeight){
+            postProcessor.stopPostProcessing(screenWidth, screenHeight);
+        }
+
+        void drawProcessed(int screenWidth, int screenHeight){
+            //First start post processing the rendered data
+            if(!glowSpecified){
+                postProcessor.startPostProcessing();
+                    renderer.clear();
+                    normalProcess.drawProcessed();
+                postProcessor.stopPostProcessing(screenWidth, screenHeight);
+            }
+            //Then render that processed data to slot0 of bloom processing
+            bloomProcess.startSampling();
+                renderer.clear();
+                postProcessor.drawFinalProcessed();
+            bloomProcess.stopSampling(screenWidth, screenHeight);
+
+            //Render the bloom result data specifying the normal texture too
+            normalProcess.bindColorTexture(1);
+            bloomProcess.drawProcessed();
+        }
+
+
     };
 };

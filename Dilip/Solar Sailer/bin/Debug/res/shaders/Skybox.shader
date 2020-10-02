@@ -19,13 +19,8 @@ void main()
 in vec3 v_TexCoord;
 
 uniform samplerCube cubeMap;
-uniform vec3 fogColor;
 
 out vec4 color;
-
-float lowerLimit = 00.0;
-float UpperLimit = 12.0;
-
 void main()
 {
     color = texture(cubeMap, v_TexCoord);

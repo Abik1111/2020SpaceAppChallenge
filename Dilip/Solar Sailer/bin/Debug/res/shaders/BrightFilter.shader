@@ -18,8 +18,14 @@ void main()
 
 in vec2 v_TexCoord;
 uniform sampler2D u_slot;
+uniform int u_width;
+uniform int u_height;
+
 out vec4 color;
 void main()
 {
+    //Handle color here
     color = texture(u_slot, v_TexCoord);
+    float brightness = (color.r*0.2126)+(color.g*0.7152)+(color.b*0.0722);
+    color = brightness*color;
 }

@@ -1,22 +1,69 @@
 # depslib dependency file v1.0
-1601394391 source:d:\programming projects\c++\solar sailer\include\engine.cpp
+1586767292 source:d:\programming projects\c++\solar sailer\include\stb_image\stb_image.cpp
+	"stb_image.h"
+
+1586767235 d:\programming projects\c++\solar sailer\include\stb_image\stb_image.h
+	"stb_image.h"
+	<stdio.h>
+	<stdlib.h>
+	<stdarg.h>
+	<stddef.h>
+	<stdlib.h>
+	<string.h>
+	<limits.h>
+	<math.h>
+	<stdio.h>
+	<assert.h>
+	<stdint.h>
+	<emmintrin.h>
+	<intrin.h>
+	<arm_neon.h>
+
+1341006776 c:\program files (x86)\codeblocks\mingw\include\stdio.h
+	<_mingw.h>
+	<stddef.h>
+	<stdarg.h>
+	<sys/types.h>
+
+1341006770 c:\program files (x86)\codeblocks\mingw\include\_mingw.h
+
+1341006780 c:\program files (x86)\codeblocks\mingw\include\sys\types.h
+	<_mingw.h>
+	<stddef.h>
+
+1341006776 c:\program files (x86)\codeblocks\mingw\include\stdlib.h
+	<_mingw.h>
+	<stddef.h>
+
+1341006776 c:\program files (x86)\codeblocks\mingw\include\string.h
+	<_mingw.h>
+	<stddef.h>
+
+1341006774 c:\program files (x86)\codeblocks\mingw\include\limits.h
+	<_mingw.h>
+
+1341006774 c:\program files (x86)\codeblocks\mingw\include\math.h
+	<_mingw.h>
+
+1341006770 c:\program files (x86)\codeblocks\mingw\include\assert.h
+	<_mingw.h>
+
+1341006776 c:\program files (x86)\codeblocks\mingw\include\stdint.h
+	<stddef.h>
+
+1601677088 source:d:\programming projects\c++\solar sailer\main.cpp
 	<GL/glew.h>
 	<GL/glut.h>
 	<stdlib.h>
-	<stdio.h>
 	<math.h>
 	<iostream>
 	<fstream>
 	<string>
 	<sstream>
-	<cstdlib>
+	"include/Engine.cpp"
+	"include/spacetime.h"
 	<glm/glm.hpp>
 	<glm/gtc/matrix_transform.hpp>
-	<bits/stdc++.h>
-	"stb_image/stb_image.h"
-	<string.h>
-	<cstdlib>
-	<math.h>
 
 1501501581 c:\program files (x86)\codeblocks\mingw\include\gl\glew.h
 	<stddef.h>
@@ -30,11 +77,6 @@
 1341006772 c:\program files (x86)\codeblocks\mingw\include\inttypes.h
 	<_mingw.h>
 	<stdint.h>
-	<stddef.h>
-
-1341006770 c:\program files (x86)\codeblocks\mingw\include\_mingw.h
-
-1341006776 c:\program files (x86)\codeblocks\mingw\include\stdint.h
 	<stddef.h>
 
 1301111164 c:\program files (x86)\codeblocks\mingw\include\gl\glu.h
@@ -102,10 +144,6 @@
 	<poppack.h>
 
 1301111162 c:\program files (x86)\codeblocks\mingw\include\winerror.h
-
-1341006776 c:\program files (x86)\codeblocks\mingw\include\string.h
-	<_mingw.h>
-	<stddef.h>
 
 1301111148 c:\program files (x86)\codeblocks\mingw\include\basetsd.h
 
@@ -235,10 +273,6 @@
 	<objidl.h>
 	<cguid.h>
 
-1341006776 c:\program files (x86)\codeblocks\mingw\include\stdlib.h
-	<_mingw.h>
-	<stddef.h>
-
 1301111156 c:\program files (x86)\codeblocks\mingw\include\objidl.h
 	<objfwd.h>
 
@@ -256,18 +290,24 @@
 1301111156 c:\program files (x86)\codeblocks\mingw\include\oleidl.h
 	<objfwd.h>
 
-1341006776 c:\program files (x86)\codeblocks\mingw\include\stdio.h
-	<_mingw.h>
-	<stddef.h>
-	<stdarg.h>
-	<sys/types.h>
-
-1341006780 c:\program files (x86)\codeblocks\mingw\include\sys\types.h
-	<_mingw.h>
-	<stddef.h>
-
-1341006774 c:\program files (x86)\codeblocks\mingw\include\math.h
-	<_mingw.h>
+1601677136 d:\programming projects\c++\solar sailer\include\engine.cpp
+	<GL/glew.h>
+	<GL/glut.h>
+	<stdlib.h>
+	<stdio.h>
+	<math.h>
+	<iostream>
+	<fstream>
+	<string>
+	<sstream>
+	<cstdlib>
+	<glm/glm.hpp>
+	<glm/gtc/matrix_transform.hpp>
+	<bits/stdc++.h>
+	"stb_image/stb_image.h"
+	<string.h>
+	<cstdlib>
+	<math.h>
 
 1586799676 c:\program files (x86)\codeblocks\mingw\include\glm\glm.hpp
 	"detail/_fixes.hpp"
@@ -978,46 +1018,23 @@
 	"../trigonometric.hpp"
 	"../matrix.hpp"
 
-1586767235 d:\programming projects\c++\solar sailer\include\stb_image\stb_image.h
-	"stb_image.h"
-	<stdio.h>
-	<stdlib.h>
-	<stdarg.h>
-	<stddef.h>
-	<stdlib.h>
-	<string.h>
-	<limits.h>
-	<math.h>
-	<stdio.h>
-	<assert.h>
-	<stdint.h>
-	<emmintrin.h>
-	<intrin.h>
-	<arm_neon.h>
+1601677147 d:\programming projects\c++\solar sailer\include\spacetime.h
+	"matter.h"
+	<map>
 
-1341006774 c:\program files (x86)\codeblocks\mingw\include\limits.h
-	<_mingw.h>
-
-1341006770 c:\program files (x86)\codeblocks\mingw\include\assert.h
-	<_mingw.h>
-
-1586767292 source:d:\programming projects\c++\solar sailer\include\stb_image\stb_image.cpp
-	"stb_image.h"
-
-1601393474 source:d:\programming projects\c++\solar sailer\main.cpp
-	<GL/glew.h>
-	<GL/glut.h>
-	<stdlib.h>
-	<math.h>
+1601651525 d:\programming projects\c++\solar sailer\include\matter.h
 	<iostream>
-	<fstream>
-	<string>
-	<sstream>
-	"include/Engine.cpp"
-	<glm/glm.hpp>
-	<glm/gtc/matrix_transform.hpp>
+	"vector3.h"
+	<math.h>
+	"constant.h"
 
-1601395477 d:\programming projects\c++\solar sailer\include\engine.cpp
+1601651525 d:\programming projects\c++\solar sailer\include\vector3.h
+	<iostream>
+	<math.h>
+
+1601651524 d:\programming projects\c++\solar sailer\include\constant.h
+
+1601677136 source:d:\programming projects\c++\solar sailer\include\engine.cpp
 	<GL/glew.h>
 	<GL/glut.h>
 	<stdlib.h>

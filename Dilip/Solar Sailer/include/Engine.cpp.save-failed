@@ -9,6 +9,9 @@
 *   or if you have somewhere else, you can change that by editing the include line below
 * d)GLEW is required to have in your IDE include as GL/glew.h
 * e)Why are you still reading? Start making stuffs you always imagined!! Good Luck!!!
+*
+*Author:De'Legend
+*Credit:Don't mention it!!! Its all yours!!
 */
 #define GLEW_STATIC
 
@@ -27,6 +30,8 @@
 #include <bits/stdc++.h>
 #include "stb_image/stb_image.h"
 #include <string.h>
+#include <cstdlib>
+#include <math.h>
 
 #define ASSERT(x) if(!x)exit(0)
 
@@ -189,11 +194,8 @@ namespace OpenGL{
             std::ifstream stream(filePath.c_str());
             int type = NONE;
 
-            if(stream == NULL){
-                std::cout << "Cannot Read File" << std::endl;
-            }
-
-            while(getline(stream, line) != NULL){
+            while(!stream.eof()){
+                getline(stream, line);
                 //If shader definition is found
                 if(line.find("#shader") != std::string::npos){
                     //If that is vertex shader
@@ -674,6 +676,7 @@ namespace OpenGL{
     public:
         /**
         *Must be called initially when frame buffer is to be initialized
+        *You must attach depth texture even if we are not using to use depth test
         */
         void generateFrameBuffer(bool colorAttachMent = true){
             GLCall(glGenFramebuffers(1, &m_rendererID));
@@ -950,6 +953,7 @@ namespace OpenGL{
     };
 }
 
+//----------------------
 /**
 *Structure of simple vertex data containing position,normal and uv
 *Data to be passed in simple vertex/fragment shader
@@ -1025,7 +1029,6 @@ public:
     }
 };
 
-//TODO:Make obj mesh both normal mapped and unmapped independent to render by renderer
 /**
 *Blueprint of objects whose data are to be loaded from obj file type
 *No need to make any other data for rendering
@@ -1072,11 +1075,8 @@ private:
 
         std::vector<unsigned int> indices;
 
-        if(stream == NULL){
-            std::cout << "Cannot Read File" << std::endl;
-        }
-
-        while(getline(stream, line) != NULL){
+        while(!stream.eof()){
+                getline(stream, line);
             std::string type;
             std::stringstream ss_datas(line);
             ss_datas >> type;
@@ -1223,11 +1223,8 @@ private:
 
         std::vector<unsigned int> indices;
 
-        if(stream == NULL){
-            std::cout << "Cannot Read File" << std::endl;
-        }
-
-        while(getline(stream, line) != NULL){
+        while(!stream.eof()){
+            getline(stream, line);
             std::string type;
             std::stringstream ss_datas(line);
             ss_datas >> type;
@@ -1332,6 +1329,407 @@ public:
         vb.deleteVertexBuffer();
     }
 };
+//-------------------------------
+
+class PerlinNoise{
+private:
+     int nWidth = 16;
+     int nHeight = 16;
+     int numOctaves = 4;
+     float totalWidth = 32.0;
+     float totalHeight = 32.0;
+     std::vector<float> fseeds;
+
+     float noise(){
+         float value = float(int(rand())%101);
+         value /= 100.0;
+         return value;
+     }
+
+     void loadSeeds(){
+         for(unsigned int i=0; i<totalWidth*totalHeight; i++){
+            fseeds.push_back(noise());
+         }
+     }
+
+public:
+    /**
+    *Value of x and y should be between 0 to 1
+    */
+    float ValueNoise_2D(double x, double y) {
+        loadSeeds();
+        x *= totalWidth;
+        y *= totalHeight;
+        float fNoise = 0.0f;
+        float fScaleAcc = 0.0f;
+        float fScale = 1.0f;
+
+        for (int o = 0; o < numOctaves; o++){
+            int nPitch = nWidth >> o;
+            int nSampleX1 = (x / nPitch) * nPitch;
+            int nSampleY1 = (y / nPitch) * nPitch;
+
+            int nSampleX2 = (nSampleX1 + nPitch) % nWidth;
+            int nSampleY2 = (nSampleY1 + nPitch) % nWidth;
+
+            float fBlendX = (float)(x - nSampleX1) / (float)nPitch;
+            float fBlendY = (float)(y - nSampleY1) / (float)nPitch;
+
+            float fSampleT = (1.0f - fBlendX) * fseeds[nSampleY1 * nWidth + nSampleX1] + fBlendX * fseeds[nSampleY1 * nWidth + nSampleX2];
+            float fSampleB = (1.0f - fBlendX) * fseeds[nSampleY2 * nWidth + nSampleX1] + fBlendX * fseeds[nSampleY2 * nWidth + nSampleX2];
+
+            fScaleAcc += fScale;
+            fNoise += (fBlendY * (fSampleB - fSampleT) + fSampleT) * fScale;
+        }
+        //return pow(noise(0),5);
+        float value = fNoise/fScaleAcc;
+        if(value<0.3){
+            value = 0.3;
+        }
+        return value;
+    }
+};
+
+class Sphere{
+private:
+    OpenGL::VertexArray va;
+    OpenGL::VertexBuffer vb;
+    OpenGL::IndexBuffer ib;
+    unsigned int segment;
+
+    std::vector<glm::vec3> calculateIcosahedronPositions(float radius){
+        const float H_ANGLE = glm::radians(72.0);
+        const float V_ANGLE = glm::radians(26.56505118);
+
+        float y, xz;
+        float hAngle1 = -1.570796 - H_ANGLE / 2;
+        float hAngle2 = -1.570796;
+        std::vector<glm::vec3> positions(12);
+
+        //Top and bottom vertex positions
+        positions[0] = glm::vec3(0.0, radius, 0.0);
+        positions[11] = glm::vec3(0.0, -radius, 0.0);
+
+        //Compute 10 vertices at 1st and 2nd rows
+        for(unsigned int i = 1; i <= 5; i++)
+        {
+            y  = radius * sinf(V_ANGLE);
+            xz = radius * cosf(V_ANGLE);
+
+            positions[i] = glm::vec3(xz * cosf(hAngle1), y, -xz * sinf(hAngle1));
+            positions[i+5] = glm::vec3(xz * cosf(hAngle2), -y, -xz * sinf(hAngle2));
+            //Next horizontal angles
+            hAngle1 += H_ANGLE;
+            hAngle2 += H_ANGLE;
+        }
+        return positions;
+    }
+
+    void loadIsocaSphereVertices(float radius, unsigned int subdivision){
+        std::vector<glm::vec3> positions = calculateIcosahedronPositions(radius);
+        std::vector<SimpleVertex> vertices;
+        for(unsigned int i=0; i<12; i++){
+            SimpleVertex vertex;
+            vertex.position = positions[i];
+            vertex.normal = glm::normalize(positions[i]);
+            if(i==0){
+                vertex.texCoords = glm::vec2(0.5, 1.0);
+            }
+            else if(i==11){
+                vertex.texCoords = glm::vec2(0.5, 0.0);
+            }
+            else if(i<6){
+                vertex.texCoords = glm::vec2(0.5+0.8333*(i-3), 0.66);
+            }
+            else{
+                vertex.texCoords = glm::vec2(0.5+0.8333*(i-8), 0.33);
+            }
+            vertices.push_back(vertex);
+        }
+        std::vector<unsigned int> indices;
+        for(unsigned int i=0; i<4; i++){
+            indices.push_back(0);
+            indices.push_back(i+1);
+            indices.push_back(i+2);
+        }
+        indices.push_back(0);
+        indices.push_back(5);
+        indices.push_back(1);
+        for(unsigned int i=5; i<9; i++){
+            indices.push_back(11);
+            indices.push_back(i+2);
+            indices.push_back(i+1);
+        }
+        indices.push_back(11);
+        indices.push_back(6);
+        indices.push_back(10);
+
+        indices.push_back(1);
+        indices.push_back(5);
+        indices.push_back(10);
+        indices.push_back(1);
+        indices.push_back(10);
+        indices.push_back(6);
+        for(unsigned int i=2; i<5; i++){
+            indices.push_back(i);
+            indices.push_back(i-1);
+            indices.push_back(i+4);
+
+            indices.push_back(i);
+            indices.push_back(i+4);
+            indices.push_back(i+5);
+        }
+        indices.push_back(5);
+        indices.push_back(4);
+        indices.push_back(9);
+        indices.push_back(5);
+        indices.push_back(9);
+        indices.push_back(10);
+
+        vb.loadData(&vertices[0], vertices.size()*sizeof(SimpleVertex));
+        va.generateVertexArray();
+        OpenGL::VertexBufferLayout vbl;
+        vbl.pushFloat(3);
+        vbl.pushFloat(3);
+        vbl.pushFloat(2);
+        va.addBuffer(vb, vbl);
+        ib.loadData(&indices[0], indices.size());
+    }
+
+    void loadCubeSphere(float radius){
+        float segment_size = 20.0/segment;
+        std::vector<SimpleVertex> vertices;
+        //Positive x face
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                SimpleVertex vertex;
+                vertex.normal = glm::normalize(glm::vec3(10.0, -10.0+i*segment_size, 10.0-j*segment_size));
+                vertex.position = radius*vertex.normal;
+                vertex.texCoords = glm::vec2(0.25+0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment);
+                vertices.push_back(vertex);
+            }
+        }
+        //Positive z face
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                SimpleVertex vertex;
+                vertex.normal = glm::normalize(glm::vec3(-10.0+j*segment_size, -10.0+i*segment_size, 10.0));
+                vertex.position = radius*vertex.normal;
+                vertex.texCoords = glm::vec2(0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment);
+                vertices.push_back(vertex);
+            }
+        }
+        //Positive y face
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                SimpleVertex vertex;
+                vertex.normal = glm::normalize(glm::vec3(-10.0+j*segment_size, 10.0, 10.0-i*segment_size));
+                vertex.position = radius*vertex.normal;
+                vertex.texCoords = glm::vec2(0.25+0.25*(float)i/segment, 1.0-0.3333*(float)j/segment);
+                vertices.push_back(vertex);
+            }
+        }
+
+        //Negative x face
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                SimpleVertex vertex;
+                vertex.normal = glm::normalize(glm::vec3(-10.0, -10.0+i*segment_size, -10.0+j*segment_size));
+                vertex.position = radius*vertex.normal;
+                vertex.texCoords = glm::vec2(0.75+0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment);
+                vertices.push_back(vertex);
+            }
+        }
+        //Negative z face
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                SimpleVertex vertex;
+                vertex.normal = glm::normalize(glm::vec3(10.0-j*segment_size, -10.0+i*segment_size, -10.0));
+                vertex.position = radius*vertex.normal;
+                vertex.texCoords = glm::vec2(0.5+0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment);
+                vertices.push_back(vertex);
+            }
+        }
+        //Negative y face
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                SimpleVertex vertex;
+                vertex.normal = glm::normalize(glm::vec3(-10.0+j*segment_size, -10.0, -10.0+i*segment_size));
+                vertex.position = radius*vertex.normal;
+                vertex.texCoords = glm::vec2(0.5-0.25*(float)i/segment, 0.3333*(float)j/segment);
+                vertices.push_back(vertex);
+            }
+        }
+
+        std::vector<unsigned int> indices;
+
+        //Calculating index for each frame
+        for(unsigned int face=0; face<6; face++){
+            unsigned int offset = face*(segment+1)*(segment+1);
+            for(unsigned int i=0; i<segment; i++){
+                for(unsigned int j=0; j<segment; j++){
+                    indices.push_back(offset+i*(segment+1)+j);
+                    indices.push_back(offset+i*(segment+1)+j+1);
+                    indices.push_back(offset+i*(segment+1)+j+segment+2);
+
+                    indices.push_back(offset+i*(segment+1)+j);
+                    indices.push_back(offset+i*(segment+1)+j+segment+2);
+                    indices.push_back(offset+i*(segment+1)+j+segment+1);
+                }
+            }
+        }
+
+        vb.loadData(&vertices[0], vertices.size()*sizeof(SimpleVertex));
+        ib.loadData(&indices[0], indices.size());
+        OpenGL::VertexBufferLayout vbl;
+        vbl.pushFloat(3);
+        vbl.pushFloat(3);
+        vbl.pushFloat(2);
+        va.generateVertexArray();
+        va.addBuffer(vb, vbl);
+    }
+
+public:
+    void loadVertices(float radius, unsigned int segment_num = 4){
+        this->segment = segment_num;
+        loadCubeSphere(radius);
+    }
+
+    void draw(OpenGL::Shader shader){
+        shader.bind();
+        va.bind();
+        ib.bind();
+        GLCall(glDrawElements(GL_TRIANGLES, ib.getCount(), GL_UNSIGNED_INT, NULL));
+    }
+
+    void cleanUp(){
+        va.deleteVertexArray();
+        vb.deleteVertexBuffer();
+        ib.deleteIndexBuffer();
+    }
+};
+
+class BumpySphere{
+private:
+    OpenGL::VertexArray va;
+    OpenGL::VertexBuffer vb;
+    OpenGL::IndexBuffer ib;
+    unsigned int segment;
+    Image bumpMap;
+
+    float getValueAt(float u, float v, float scaling){
+        int x = u*(bumpMap.getWidth()-1);
+        int y = v*(bumpMap.getHeight()-1);
+        PixelData pixel = bumpMap.getPixelAt(x, y);
+        return scaling*pixel.r/255.0;
+    }
+
+    void loadCubeSphere(float radius, float max_height){
+        float segment_size = 20.0/segment;
+        std::vector<SimpleVertex> vertices;
+        SimpleVertex vertex;
+        //Positive x face
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                vertex.normal = glm::normalize(glm::vec3(10.0, -10.0+i*segment_size, 10.0-j*segment_size));
+                vertex.position = (getValueAt(0.25+0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment, max_height)+radius)*vertex.normal;
+                vertex.texCoords = glm::vec2(0.25+0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment);
+                vertices.push_back(vertex);
+            }
+        }
+        //Positive z face
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                vertex.normal = glm::normalize(glm::vec3(-10.0+j*segment_size, -10.0+i*segment_size, 10.0));
+                vertex.position = (getValueAt(0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment, max_height)+radius)*vertex.normal;
+                vertex.texCoords = glm::vec2(0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment);
+                vertices.push_back(vertex);
+            }
+        }
+        //Positive y face
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                vertex.normal = glm::normalize(glm::vec3(-10.0+j*segment_size, 10.0, 10.0-i*segment_size));
+                vertex.position = (getValueAt(0.25+0.25*(float)i/segment, 1.0-0.3333*(float)j/segment, max_height)+radius)*vertex.normal;
+                vertex.texCoords = glm::vec2(0.25+0.25*(float)i/segment, 1.0-0.3333*(float)j/segment);
+                vertices.push_back(vertex);
+            }
+        }
+        //Negative x face
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                vertex.normal = glm::normalize(glm::vec3(-10.0, -10.0+i*segment_size, -10.0+j*segment_size));
+                vertex.position = (getValueAt(0.75+0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment, max_height)+radius)*vertex.normal;
+                vertex.texCoords = glm::vec2(0.75+0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment);
+                vertices.push_back(vertex);
+            }
+        }
+        //Negative z face
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                vertex.normal = glm::normalize(glm::vec3(10.0-j*segment_size, -10.0+i*segment_size, -10.0));
+                vertex.position = (getValueAt(0.5+0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment, max_height)+radius)*vertex.normal;
+                vertex.texCoords = glm::vec2(0.5+0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment);
+                vertices.push_back(vertex);
+            }
+        }
+        //Negative y face
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                vertex.normal = glm::normalize(glm::vec3(-10.0+j*segment_size, -10.0, -10.0+i*segment_size));
+                vertex.position = (getValueAt(0.5-0.25*(float)i/segment, 0.3333*(float)j/segment, max_height)+radius)*vertex.normal;
+                vertex.texCoords = glm::vec2(0.5-0.25*(float)i/segment, 0.3333*(float)j/segment);
+                vertices.push_back(vertex);
+            }
+        }
+        std::vector<unsigned int> indices;
+        //Calculating index for each frame
+        for(unsigned int face=0; face<6; face++){
+            unsigned int offset = face*(segment+1)*(segment+1);
+            for(unsigned int i=0; i<segment; i++){
+                for(unsigned int j=0; j<segment; j++){
+                    indices.push_back(offset+i*(segment+1)+j);
+                    indices.push_back(offset+i*(segment+1)+j+1);
+                    indices.push_back(offset+i*(segment+1)+j+segment+2);
+
+                    indices.push_back(offset+i*(segment+1)+j);
+                    indices.push_back(offset+i*(segment+1)+j+segment+2);
+                    indices.push_back(offset+i*(segment+1)+j+segment+1);
+                }
+            }
+        }
+
+        vb.loadData(&vertices[0], vertices.size()*sizeof(SimpleVertex));
+        ib.loadData(&indices[0], indices.size());
+        OpenGL::VertexBufferLayout vbl;
+        vbl.pushFloat(3);
+        vbl.pushFloat(3);
+        vbl.pushFloat(2);
+        va.generateVertexArray();
+        va.addBuffer(vb, vbl);
+    }
+
+public:
+    void loadVertices(float radius, float max_height, std::string bumpMapLocation, unsigned int segment_num = 4){
+        this->segment = segment_num;
+        bumpMap.loadImage(bumpMapLocation);
+        loadCubeSphere(radius, max_height);
+    }
+
+    void draw(OpenGL::Shader shader){
+        shader.bind();
+        va.bind();
+        ib.bind();
+        GLCall(glDrawElements(GL_TRIANGLES, ib.getCount(), GL_UNSIGNED_INT, NULL));
+    }
+
+    void cleanUp(){
+        va.deleteVertexArray();
+        vb.deleteVertexBuffer();
+        ib.deleteIndexBuffer();
+        bumpMap.deleteImage();
+    }
+};
 
 /**
 *Blueprint for sky box object
@@ -1345,7 +1743,6 @@ private:
     OpenGL::VertexBuffer vb;
     OpenGL::CubeMap cm;
     OpenGL::Shader shader;
-    static const float DEFAULT_ROTATION_SPEED = 0.0075;
     float rotation = 0.0;
 public:
 
@@ -1427,13 +1824,16 @@ public:
     /**
     *Increase the rotation value of the sky-box
     */
-    void increaseRotation(float delta = DEFAULT_ROTATION_SPEED){
+    void increaseRotation(float delta = 0.0075){
         rotation += delta;
         if(rotation >=360)
             rotation = 0.0;
     }
 
-    void draw(glm::mat4 view, glm::mat4 projection){
+    /**
+    *Renders the sky-box object into the screen
+    */
+    void render(glm::mat4 view, glm::mat4 projection){
         shader.bind();
         //Removing translation for sky box
         //i.e camera always stays at center for sky-box
@@ -1449,6 +1849,9 @@ public:
         GLCall(glDrawArrays(GL_TRIANGLES, 0, 36));
     }
 
+    /**
+    *Cleans up the data allocated by this object
+    */
     void cleanUP(){
         va.deleteVertexArray();
         vb.deleteVertexBuffer();
@@ -1457,30 +1860,43 @@ public:
     }
 };
 
-struct terrainVertex{
+/**
+*Vertex structure to be used for terrain
+*Contain the extra component glm::vec2 mapUV to map texture using RGB values
+*/
+struct TerrainVertex{
     glm::vec3 position;
     glm::vec3 normal;
     glm::vec2 uv;
     glm::vec2 mapUV;
 };
 
+/**
+*Blueprint for Terrain
+*Represents actual terrain of the system
+*No extra initialization or shader is requires
+*Each object will have its own shader considering there will be one or few terrain only
+*/
 class Terrain{
     private:
-        static const float maxHeight = 20.0f;
-        //Scaling of texture with actual terrain data
-        float x_scaling;
-        float z_scaling;
-        float gridSize;
+        float maxHeight;
+        float x_scaling;//Scaling of texture with actual terrain data
+        float z_scaling;//Scaling of texture with actual terrain data
+        float gridSize;//Contains grid of size grid-size
         OpenGL::VertexArray va;
         OpenGL::VertexBuffer vb;
-        OpenGL::Texture texture[5];
-        OpenGL::Texture depthTexture;
-        Image height;
+        OpenGL::Texture texture[5];//Yeah!!! array or textures
+        OpenGL::Texture depthTexture;//Again depth texture to
+        Image height;//And one more image for height mapping ;)
         OpenGL::Shader shader;
         unsigned int num_vertices;
-        std::vector< std::vector<float> > height_values;
+        std::vector<std::vector<float> > height_values;//What? did you think I didn't try >> instead of > >
+        //Stores the height values of grid for collision detection
 
-        float getHeight(float x,float z){
+        /**
+        *Returns the height of terrain at certain point from height map
+        */
+        float getHeightFromMap(float x,float z){
             if(x<0 || x>height.getWidth() || z<0 || z>height.getHeight()){
                 return 0;
             }
@@ -1491,12 +1907,15 @@ class Terrain{
             return result;
         }
 
+        /**
+        *Calculate the position of grid and stores in both cpu and gpu buffers
+        */
         void calculateVertices(float tileSize, float length, float width){
             glm::vec3 pos1, pos2, pos3;
             glm::vec2 uv1, uv2, uv3;
             glm::vec2 mapuv1, mapuv2, mapuv3;
             glm::vec3 normal = glm::vec3(0, 1, 0);
-            std::vector<terrainVertex> vertices;
+            std::vector<TerrainVertex> vertices;
 
             float i_loop = length/tileSize;
             float j_loop = width/tileSize;
@@ -1507,15 +1926,15 @@ class Terrain{
             for(int i = 0 ; i < (i_loop); i++){
                 std::vector<float> zAxisHeights;
                 for(int j=0; j < (j_loop); j++){
-                    pos1 = glm::vec3(i* tileSize, getHeight(i*height.getWidth()/i_loop, j*height.getHeight()/j_loop), -(j*tileSize));
+                    pos1 = glm::vec3(i* tileSize, getHeightFromMap(i*height.getWidth()/i_loop, j*height.getHeight()/j_loop), -(j*tileSize));
                     uv1 = glm::vec2(0, 0);
                     mapuv1 = glm::vec2(i/i_loop, j/j_loop);
 
-                    pos2 = glm::vec3((i+1)* tileSize, getHeight((i+1)*height.getWidth()/i_loop, j*height.getHeight()/j_loop), -(j*tileSize));
+                    pos2 = glm::vec3((i+1)* tileSize, getHeightFromMap((i+1)*height.getWidth()/i_loop, j*height.getHeight()/j_loop), -(j*tileSize));
                     uv2 = glm::vec2(1, 0);
                     mapuv2 = glm::vec2((i+1)/i_loop, j/j_loop);
 
-                    pos3 = glm::vec3((i+1)* tileSize, getHeight((i+1)*height.getWidth()/i_loop, (j+1)*height.getHeight()/j_loop), -((j+1)*tileSize));
+                    pos3 = glm::vec3((i+1)* tileSize, getHeightFromMap((i+1)*height.getWidth()/i_loop, (j+1)*height.getHeight()/j_loop), -((j+1)*tileSize));
                     uv3 = glm::vec2(1, 1);
                     mapuv3 = glm::vec2((i+1)/i_loop, (j+1)/j_loop);
 
@@ -1524,15 +1943,15 @@ class Terrain{
                     vertices.push_back({pos3, normal, uv3, mapuv3});
                     zAxisHeights.push_back(pos1.y);
 
-                    pos1 = glm::vec3(i* tileSize, getHeight(i*height.getWidth()/i_loop, j*height.getHeight()/j_loop), -(j*tileSize));
+                    pos1 = glm::vec3(i* tileSize, getHeightFromMap(i*height.getWidth()/i_loop, j*height.getHeight()/j_loop), -(j*tileSize));
                     uv1 = glm::vec2(0, 0);
                     mapuv1 = glm::vec2(i/i_loop, j/j_loop);
 
-                    pos2 = glm::vec3((i+1)* tileSize, getHeight((i+1)*height.getWidth()/i_loop, (j+1)*height.getHeight()/j_loop), -((j+1)*tileSize));
+                    pos2 = glm::vec3((i+1)* tileSize, getHeightFromMap((i+1)*height.getWidth()/i_loop, (j+1)*height.getHeight()/j_loop), -((j+1)*tileSize));
                     uv2 = glm::vec2(1, 1);
                     mapuv2 = glm::vec2((i+1)/i_loop, (j+1)/j_loop);
 
-                    pos3 = glm::vec3(i* tileSize, getHeight(i*height.getWidth()/i_loop, (j+1)*height.getHeight()/j_loop), -((j+1)*tileSize));
+                    pos3 = glm::vec3(i* tileSize, getHeightFromMap(i*height.getWidth()/i_loop, (j+1)*height.getHeight()/j_loop), -((j+1)*tileSize));
                     uv3 = glm::vec2(0, 1);
                     mapuv3 = glm::vec2((i)/i_loop, (j+1)/j_loop);
 
@@ -1544,11 +1963,21 @@ class Terrain{
                 zAxisHeights.clear();
             }
             num_vertices = vertices.size();
-            vb.loadData(&vertices[0], sizeof(terrainVertex)*vertices.size());
+            vb.loadData(&vertices[0], sizeof(TerrainVertex)*vertices.size());
             vertices.clear();
         }
 
     public:
+        Terrain():maxHeight(20.0f){}
+
+        /**
+        *Loads terrain from passed data
+        *@param shaderLocation: file location of terrain shader
+        *@param textureLocations: file locations of different texture to be applied on terrain
+        *@param heightMap: file location of height map of terrain
+        *@param tileSize: size of each tile of terrain
+        *@param length and width: dimensions of terrain
+        */
         void loadTerrain(std::string shaderLocation, std::vector<std::string> textureLoactions, std::string heightMap,float tileSize, float length,float width){
             shader.loadShader(shaderLocation);
             shader.bind();
@@ -1605,7 +2034,8 @@ class Terrain{
         }
 
         /**
-        *Shadow loader should bind texture in shadow depth slot to get shadow
+        *Draws the terrain using its own shader
+        *Shadow loader should be binded in shadow depth slot before drawing to get to get shadow in terrain
         */
         void draw(glm::mat4 view, glm::mat4 projection, glm::mat4 lightSpace = glm::mat4(1.0),
                     glm::vec4 clippingPlane= glm::vec4(0.0, -1.0, 0.0, 20.0)){
@@ -1618,13 +2048,16 @@ class Terrain{
             shader.addUniform4f("u_clipPlane", clippingPlane);
             shader.addUniformMat4f("u_lightSpace", lightSpace);
             va.bind();
-
             GLCall(glDrawArrays(GL_TRIANGLES, 0, num_vertices));
         }
 
-        void draw(glm::mat4 mvp, OpenGL::Shader shader){
+        /**
+        *Draws the terrain using passed shader targeted for getting depth values only
+        *All the uniform values must have been supplied to the shader and vertex format must be TerrainVertex
+        */
+        //TODO::Make Draw Colorless and without depending upon extra shader
+        void draw(OpenGL::Shader shader){
             shader.bind();
-            shader.addUniformMat4f("mvp", mvp);
             va.bind();
             GLCall(glDrawArrays(GL_TRIANGLES, 0, num_vertices));
         }
@@ -1685,10 +2118,16 @@ class Terrain{
             return (D - A*x + C*z)/B;
         }
 
+        /**
+        *Returns where depth slot from shadow loader to be binded
+        */
         unsigned int shadowDepthSlot(){
             return 5;
         }
 
+        /**
+        *Cleans up the memory it allocated in both CPU and GPU
+        */
         void cleanUP(){
             shader.deleteShader();
             height.deleteImage();
@@ -1741,1281 +2180,281 @@ public:
     }
 };
 
-class Props{
+class PlanetChunk{
 private:
-    OpenGL::VertexArray va;
+    Image heightMap;
     OpenGL::VertexBuffer vb;
-    unsigned int vertex_count;
-    std::vector<SimpleVertex> vertices;
-    OpenGL::Texture itemsTexture;
-    unsigned int grid_items;
+    OpenGL::VertexArray va;
+    OpenGL::IndexBuffer ib;
+    float radius;
+    float chunk_size;
+    float max_height;
+    unsigned int segment;
+    float zero_r_value;
 
-    /**
-    *Takes the string and returns the vector containing the strings
-    */
-    static std::vector<std::string> splitString(std::string str, char delim = ' '){
-        std::vector<std::string> strData;
-        std::string tempString = "";
-        for(unsigned int i=0; str[i]!='\0'; i++){
-            if(str[i] == delim){
-                tempString += '\n';
-                strData.push_back(tempString);
-                tempString = "";
-                continue;
-            }
-            tempString += str[i];
-        }
-        tempString += '\n';
-        strData.push_back(tempString);
-        return strData;
+    float getValueAt(glm::vec2 texCor){
+        int x = texCor.x*(heightMap.getWidth()-1);
+        int y = texCor.y*(heightMap.getHeight()-1);
+        PixelData pixel = heightMap.getPixelAt(x, y);
+        return (pixel.r-zero_r_value)/(255.0-zero_r_value);
     }
 
-    /**
-    *Adds the data from the Location to vertices buffer
-    */
-    void readBuffers(std::string location, glm::vec3 offset_position, float scaling, unsigned int x_grid, unsigned int y_grid, bool upNormal){
-        std::string line;
-        std::ifstream stream(location.c_str());
-        std::vector<glm::vec3> positions;
-        std::vector<glm::vec3> normals;
-        std::vector<glm::vec2> uvs;
-        std::vector<unsigned int> indices;
-
-        float uv_scaling = 1/(float)grid_items;
-
-        if(stream == NULL){
-            std::cout << "Cannot Read File" << std::endl;
-        }
-
-        while(getline(stream, line) != NULL){
-            std::string type;
-            std::stringstream ss_datas(line);
-            ss_datas >> type;
-
-            if(type == "v"){
-                float points[3];
-                ss_datas >> points[0] >> points[1] >> points[2];
-                points[0]=points[0]*scaling + offset_position.x;
-                points[1]=points[1]*scaling + offset_position.y;
-                points[2]=points[2]*scaling + offset_position.z;
-                positions.push_back(glm::vec3(points[0], points[1], points[2]));
+    void recalculateUv(glm::vec2 &texCor){
+        if(texCor.y>0.66){
+            if(texCor.x>0.5 && texCor.x<0.75){
+                float corner_x = texCor.x-0.5;
+                float corner_y = texCor.y-0.66;
+                corner_x = corner_x*0.33/0.25;
+                corner_y = corner_y*0.25/0.33;
+                texCor.x = 0.5-corner_y;
+                texCor.y = 0.66+corner_x;
             }
-            else if (type == "vn"){
-                float points[3];
-                ss_datas >> points[0] >> points[1] >> points[2];
-
-                if(upNormal)
-                    normals.push_back(glm::vec3(0.0, 1.0, 0.0));
-                else
-                    normals.push_back(glm::vec3(points[0], points[1], points[2]));
+            else if(texCor.x<0.25){
+                float corner_x = texCor.x;
+                float corner_y = texCor.y-0.66;
+                corner_x = corner_x*0.33/0.25;
+                corner_y = corner_y*0.25/0.33;
+                texCor.x = 0.25+corner_y;
+                texCor.y = 1-corner_x;
             }
-            else if (type == "vt"){
-                float points[2];
-                ss_datas >> points[0] >> points[1];
-                points[0] *= uv_scaling;
-                points[1] *= uv_scaling;
-                points[0] += (float)x_grid*uv_scaling;
-                points[1] += (float)y_grid*uv_scaling;
-                uvs.push_back(glm::vec2(points[0], points[1]));
-            }
-            else if(type == "f"){
-                std::vector<std::string> v_datas = splitString(line);
-                for(unsigned int i=1; i<=3; i++){
-                    std::vector<std::string> vertex = splitString(v_datas[i], '/');
-                    std::stringstream ss_v(vertex[0]);
-                    std::stringstream ss_u(vertex[1]);
-                    std::stringstream ss_n(vertex[2]);
-                    float v_index = 0;
-                    float u_index = 0;
-                    float n_index = 0;
-
-                    ss_v >> v_index;
-                    ss_u >> u_index;
-                    ss_n >> n_index;
-
-                    vertices.push_back({positions[v_index-1], normals[n_index-1], uvs[u_index-1]});
-                }
+            else if(texCor.x>0.75){
+                float corner_x = texCor.x-0.75;
+                float corner_y = texCor.y-0.66;
+                texCor.x = 0.5-corner_x;
+                texCor.y = 1.0-corner_y;
             }
         }
-        positions.clear();
-        normals.clear();
-        uvs.clear();
+        else if(texCor.y<0.33){
+            if(texCor.x>0.5 && texCor.x<0.75){
+                float corner_x = texCor.x-0.5;
+                float corner_y = 0.33-texCor.y;
+                corner_x = corner_x*0.33/0.25;
+                corner_y = corner_y*0.25/0.33;
+                texCor.x = 0.5-corner_y;
+                texCor.y = 0.33-corner_x;
+            }
+            else if(texCor.x<0.25){
+                float corner_x = texCor.x;
+                float corner_y = 0.33-texCor.y;
+                corner_x = corner_x*0.33/0.25;
+                corner_y = corner_y*0.25/0.33;
+                texCor.x = 0.25+corner_y;
+                texCor.y = 1-corner_x;
+            }
+            else if(texCor.x>0.75){
+                float corner_x = texCor.x-0.75;
+                float corner_y = 0.33-texCor.y;
+                texCor.x = 0.5-corner_x;
+                texCor.y = corner_y;
+            }
+        }
+    }
+
+    glm::vec2 getPosUv(float rotation, glm::vec2 texCor){
+        texCor.x -= (rotation/(360.0));
+        if(texCor.x<0){
+            texCor.x+=1.0;
+        }
+
+
+        //Making sure that texture is always inside cube texture
+        //recalculateUv(texCor);
+
+        return glm::vec2(texCor.x, texCor.y);
     }
 
 public:
+    void loadPlanetChunk(float radius, float chunk_angle, float max_height, unsigned int segment, std::string heightMapLocation, float zero_r){
+        this->radius = radius;
+        this->chunk_size = chunk_angle*20.0/90.0;
+        this->segment = segment;
+        this->max_height = max_height;
+        this->zero_r_value = zero_r;
+        heightMap.loadImage(heightMapLocation);
 
-    void loadTexture(std::string filePath, unsigned int grid_items=1){
-        this->grid_items = grid_items;
-        itemsTexture.loadTexture(filePath);
-    }
-
-    /**
-    *@param objLocation is location of obj file
-    *@param x_grid and y_grid is the location of texture in grid to be used and count starts from zero
-    *@param position is position of current obj file
-    */
-    void pushItem(std::string objLocation, unsigned int x_grid=0, unsigned int y_grid=0 ,glm::vec3 position=glm::vec3(0.0, 0.0, 0.0),float scaling=1.0, bool upNormal=false){
-        if(x_grid>=grid_items || y_grid>=grid_items)
-            return;
-        readBuffers(objLocation, position,scaling, x_grid, y_grid, upNormal);
-    }
-
-    /**
-    *After all items are pushed, then it sores the data from vector into buffer
-    */
-    void allItemsPushed(){
-        vb.loadData(&vertices[0], vertices.size()*sizeof(SimpleVertex));
-        vertex_count = vertices.size();
-        vertices.clear();
-
+        vb.allocateDynamically((segment+1)*(segment+1)*sizeof(SimpleVertex));
         OpenGL::VertexBufferLayout vbl;
+        va.generateVertexArray();
         vbl.pushFloat(3);
         vbl.pushFloat(3);
         vbl.pushFloat(2);
-
-        va.generateVertexArray();
         va.addBuffer(vb, vbl);
+
+        std::vector<unsigned int> indices;
+        for(unsigned int i=0; i<segment; i++){
+            for(unsigned int j=0; j<segment; j++){
+               indices.push_back(i*(segment+1)+j);
+               indices.push_back(i*(segment+1)+j+1);
+               indices.push_back(i*(segment+1)+j+segment+2);
+
+               indices.push_back(i*(segment+1)+j);
+               indices.push_back(i*(segment+1)+j+segment+2);
+               indices.push_back(i*(segment+1)+j+segment+1);
+            }
+        }
+        ib.loadData(&indices[0], indices.size());
     }
 
-    void render(OpenGL::Shader shader){
-        Window::disableBackfaceCulling();
+    void update(float rotation, glm::vec3 rot_axis, glm::vec3 pos_in_sphere_axis){
+        glm::mat4 inverseSphereLocalSpace = glm::rotate(glm::mat4(1.0), glm::radians(-rotation), rot_axis);
+        pos_in_sphere_axis = glm::vec3(glm::vec4(pos_in_sphere_axis, 1.0)*inverseSphereLocalSpace);
+        pos_in_sphere_axis = glm::normalize(pos_in_sphere_axis);
+        glm::vec3 difference = pos_in_sphere_axis - glm::vec3(1.0, 0.0, 0.0);
+
+        float segment_size = chunk_size/segment;
+        float offset = 10.0-chunk_size/2.0;
+        std::vector<SimpleVertex> vertices;
+        SimpleVertex vertex;
+        for(unsigned int i=0; i<=segment; i++){
+            for(unsigned int j=0; j<=segment; j++){
+                glm::vec2 texCor = glm::vec2(0.25+0.25*(float)j/segment, 0.3333+0.3333*(float)i/segment);
+                texCor = getPosUv(rotation, texCor);
+                vertex.normal = glm::normalize(glm::vec3(10.0, -10.0+i*segment_size+offset, 10.0-j*segment_size-offset));
+                vertex.position = (getValueAt(texCor)*max_height+radius)*vertex.normal;
+                vertex.texCoords = texCor;
+                vertices.push_back(vertex);
+            }
+        }
+        vb.feedDatatoAllocated(&vertices[0], vertices.size()*sizeof(SimpleVertex));
+    }
+
+    void draw(OpenGL::Shader shader){
         shader.bind();
         va.bind();
-        itemsTexture.bind();
-        GLCall(glDrawArrays(GL_TRIANGLES, 0, vertex_count));
-        Window::enableBackfaceCulling();
-    }
-
-    void cleanUP(){
-        va.deleteVertexArray();
-        vb.deleteVertexBuffer();
-        itemsTexture.deleteTexture();
+        ib.bind();
+        GLCall(glDrawElements(GL_TRIANGLES, ib.getCount(), GL_UNSIGNED_INT, NULL));
     }
 };
 
-namespace Animation{
-    //Data structure for VAO
-    struct AnimationData{
-        glm::vec3 position;
-        glm::vec3 normals;
-        glm::vec2 uvs;
-        glm::uvec3 joints;
-        glm::vec3 weights;
-    };
+class Planet{
+private:
+    Sphere sphere;
+    OpenGL::Texture texture;
+    glm::vec3 position;
+    float rotation;
+    glm::vec3 rotation_axis;
+    glm::vec3 velocity;
 
-    //Representing each joint
-    struct Joint{
-        unsigned int id;//Id of joint (each should have unique id)
-        std::string name;//Name
-        std::vector<Joint> children;//List of children
-        glm::mat4 invertedBindTransform;//Transformation in relation to origin but directed towards origin
-        glm::mat4 animatedTransform;//Transformation to be applied for new animating transformation
-
-        /**
-        *Loads the data to joint
-        */
-        void loadJoint(unsigned int ID, std::string NAME){
-            id = ID;
-            name = NAME;
-        }
-
-        /**
-        *Adds child to current children list
-        */
-        void addChild(Joint child){
-            children.push_back(child);
-        }
-    };
-
-    //Representing angle by 4 component of vectors
-    struct Quaternion{
-        glm::vec4 angle;
-
-        /**
-        *Normalizes the vector
-        */
-        void normalize(){
-            angle = glm::normalize(angle);
-        }
-
-        /**
-        *Converts the quaternion to matrix containing rotation part
-        */
-        glm::mat4 toRotationMatrix(){
-            float data[4][4];
-
-            data[0][0] = 1.0-2.0*(angle.y*angle.y+angle.z*angle.z);
-            data[0][1] = 2.0*(angle.x*angle.y - angle.z*angle.w);
-            data[0][2] = 2.0*(angle.x*angle.z + angle.y*angle.w);
-            data[0][3] = 0.0;
-            data[1][0] = 2.0*(angle.x*angle.y + angle.z*angle.w);
-            data[1][1] = 1.0-2.0*(angle.x*angle.x+angle.z*angle.z);
-            data[1][2] = 2.0*(angle.y*angle.z - angle.x*angle.w);
-            data[1][3] = 0.0;
-            data[2][0] = 2.0*(angle.x*angle.z - angle.y*angle.w);
-            data[2][1] = 2.0*(angle.y*angle.z + angle.x*angle.w);
-            data[2][2] = 1.0-2.0*(angle.x*angle.x + angle.y*angle.y);
-            data[2][3] = 0.0;
-            data[3][0] = 0.0;
-            data[3][1] = 0.0;
-            data[3][2] = 0.0;
-            data[3][3] = 1.0;
-            return glm::mat4(data[0][0], data[0][1], data[0][2], data[0][3],
-                             data[1][0], data[1][1], data[1][2], data[1][3],
-                             data[2][0], data[2][1], data[2][2], data[2][3],
-                             data[3][0], data[3][1], data[3][2], data[3][3]);
-        }
-
-        /**
-        *Converts transformation matrix into quaternion
-        */
-        static Quaternion loadFromMatrix(glm::mat4 matrix){
-            float x,y,z,w;
-            float diagonal = matrix[0][0]+matrix[1][1]+matrix[2][2];
-            if(diagonal > 0){
-                float w4 = 2*sqrt(diagonal+1.0);
-                x = (matrix[2][1] - matrix[1][2])/w4;
-                y = (matrix[0][2] - matrix[2][0])/w4;
-                z = (matrix[1][0] - matrix[0][1])/w4;
-                w = w4/4.0;
-            }
-            else if((matrix[0][0]>matrix[1][1]) && (matrix[0][0]>matrix[2][2])){
-                float x4 = 2*sqrt(1.0+matrix[0][0]-matrix[1][1]-matrix[2][2]);
-                x = x4/4.0;
-                y = (matrix[1][0] + matrix[0][1])/x4;
-                z = (matrix[0][2] + matrix[2][0])/x4;
-                w = (matrix[2][1] - matrix[1][2])/x4;
-            }
-            else if(matrix[1][1]>matrix[2][2]){
-                float y4 = 2*sqrt(1-matrix[0][0]+matrix[1][1]-matrix[2][2]);
-                x = (matrix[1][0] + matrix[0][1])/y4;
-                y = y4/4.0;
-                z = (matrix[2][1] + matrix[1][2])/y4;
-                w = (matrix[0][2] - matrix[2][0])/y4;
-            }
-            else{
-                float z4 = 2*sqrt(1-matrix[0][0]-matrix[1][1]+matrix[2][2]);
-                x = (matrix[0][2] + matrix[2][0])/z4;
-                y = (matrix[2][1] + matrix[1][2])/z4;
-                z = z4/4.0;
-                w = (matrix[1][0] - matrix[0][1])/z4;
-            }
-
-            Quaternion result;
-            result.angle = glm::vec4(x,y,z,w);
-            return result;
-        }
-
-        /**
-        *Interpolates between quaternions depending upon blend
-        */
-        static Quaternion interPolate(Quaternion a,Quaternion b,float blend){
-            Quaternion result;
-            float x,y,z,w;
-            float dot = a.angle.x*b.angle.x + a.angle.y*b.angle.y + a.angle.z*b.angle.z;
-            float blend_inverse = 1-blend;
-            if(dot < 0){
-                result.angle = blend_inverse*a.angle - blend*b.angle;
-    //            x = blend_inverse*a.angle.x - blend*b.angle.x;
-    //            y = blend_inverse*a.angle.y - blend*b.angle.y;
-    //            z = blend_inverse*a.angle.z - blend*b.angle.z;
-    //            w = blend_inverse*a.angle.w - blend*b.angle.w;
-            }
-            else{
-                result.angle = blend_inverse*a.angle + blend*b.angle;
-    //            x = blend_inverse*a.angle.x + blend*b.angle.x;
-    //            y = blend_inverse*a.angle.y + blend*b.angle.y;
-    //            z = blend_inverse*a.angle.z + blend*b.angle.z;
-    //            w = blend_inverse*a.angle.w + blend*b.angle.w;
-            }
-            result.normalize();
-            return result;
-        }
-    };
-
-    //Represents the transformation of each joint relation to its parent
-    struct JointTransform{
-    glm::vec3 position;//Position of joint
-    Quaternion rotation;//Rotation of joint
-
-    /**
-    *Converts the joint transform to transformation matrix
-    */
-    glm::mat4 getLocalTransform(){
-        glm::mat4 result = glm::translate(glm::mat4(1.0), position);
-        result = result*rotation.toRotationMatrix();//Rotation first
-        //result = rotation.toRotationMatrix()*result;//Translation first
-        return result;
+public:
+    void loadPlanet(std::string textureLocation, float radius = 1,unsigned int segment = 4, glm::vec3 rot_axis = glm::vec3(0.0, 1.0, 0.0)){
+        rotation_axis = rot_axis;
+        rotation = 0.0;
+        sphere.loadVertices(radius, segment);
+        texture.loadTexture(textureLocation);
     }
 
-    /**
-    *Interpolates 3 components of vector i.e generally position
-    */
-    static glm::vec3 interpolatePosition(glm::vec3 startPosition, glm::vec3 endPosition, float progress){
-        glm::vec3 diff = endPosition-startPosition;
-        glm::vec3 result = startPosition + progress*diff;
-    //    result.x = startPosition.x + progress*diff.x;
-    //    result.y = startPosition.y + progress*diff.y;
-    //    result.z = startPosition.z + progress*diff.z;
-        return result;
+    void setRotaion(float rot){
+        rotation = rot;
+        if(rotation>=360){
+            rotation = 0;
+        }
     }
 
-    /**
-    *Interpolates the joint transformation depending upon progress
-    */
-    static JointTransform interpolate(JointTransform posA, JointTransform posB, float progress){
-        JointTransform result;
-        result.position = interpolatePosition(posA.position, posB.position, progress);
-        result.rotation = Quaternion::interPolate(posA.rotation, posB.rotation, progress);
-        return result;
+    void increaseRotation(float delta){
+        rotation += delta;
+        if(rotation>=360){
+            rotation = 0;
+        }
     }
 
-    /**
-    *Converts the transformation matrix to joint transform
-    */
-    static JointTransform loadFromMatrix(glm::mat4 matrix){
-        JointTransform result;
-        result.rotation = Quaternion::loadFromMatrix(matrix);
-        result.position = glm::vec3(matrix[3][0], matrix[3][1], matrix[3][2]);
-        return result;
+    void setPosition(glm::vec3 pos){
+        position = pos;
     }
 
-    };
-
-    //Represents hash map of joint id and its transforms
-    struct JointMap{
-        std::vector<JointTransform> jointTransforms;//Transformation of joints
-        std::vector<unsigned int> ids;//IDs of corresponding joints
-
-        /**
-        *Returns joint transform of the joint having @param id
-        */
-        JointTransform getValue(unsigned int id){
-            //Searching for matching id
-            for(int i=0; i<ids.size(); i++){
-                if(ids[i]==id){
-                    return jointTransforms[i];
-                }
-            }
-            //If no id found then return dummy transform
-            JointTransform jointTransform = JointTransform::loadFromMatrix(glm::mat4(1.0));
-            std::cout<<"Warning::No ids found in joint-map!!"<<std::endl;
-            return jointTransform;
-        }
-
-        /**
-        *Adds the data to joint map
-        */
-        void pushValue(JointTransform jointTransform, unsigned int id){
-            //Check if id already exists
-            for(unsigned int i=0; i<ids.size(); i++){
-                if(ids[i]==id){
-                    //If exists then replace old transform with new one
-                    jointTransforms[i] = jointTransform;
-                    std::cout<<"Warning::Old transforms being replaced!!!"<<std::endl;
-                    return;
-                }
-            }
-            jointTransforms.push_back(jointTransform);
-            ids.push_back(id);
-        }
-
-        /**
-        *Clears the value of the map
-        */
-        void flushValues(){
-            jointTransforms.clear();
-            ids.clear();
-        }
-    };
-
-    //Representing each key-frame of animation
-    struct KeyFrame{
-    JointMap jointTransforms;
-    float timeStamp;
-    //Assuming that all joint animation have same time-stamp
-
-    /**
-    *Adds transformations of joint
-    */
-    void addJointTransforms(JointTransform jointTransform,unsigned int jointID){
-        jointTransforms.pushValue(jointTransform, jointID);
+    void drawPlanet(OpenGL::Shader& shader, glm::mat4 viewProjection){
+        glm::mat4 model=glm::mat4(1.0f);
+        model = glm::translate(model, position);
+        model = glm::rotate(model, glm::radians(rotation), rotation_axis);
+        shader.bind();
+        shader.addUniformMat4f("u_model", model);
+        model = viewProjection*model;
+        shader.addUniformMat4f("u_MVP", model);
+        texture.bind();
+        sphere.draw(shader);
     }
-    };
 
-    //Represents the complete set of key-frames
-    struct Animation{
-    std::vector<KeyFrame> keyFrames;
-    float length;//Total length of animation
-    };
-
-    //Animates the animation set in for function
-    class Animator{
-    private:
-        Animation currentAnimation;//Animation to be animated
-        float animationTime;//Time elapsed in seconds
-        bool animationLoop;//Whether to loop the animation or not
-
-        /**
-        *Increases the time value after each call
-        */
-        void increaseTime(int fps){
-            animationTime += 1.0/(float)fps;
-            //TODO:: Implement looping in animation
-            if(animationTime > currentAnimation.length){
-                animationTime = 0;
-            }
-        }
-
-        /**
-        *Calculates the frames to be interpolated for animation
-        *first value is previous frame and second value is next frame
-        */
-        std::vector<KeyFrame> getNextAndPreviousFrame(){
-            //For safety reason if there is only one key frame
-            KeyFrame prevFrame = currentAnimation.keyFrames[0];
-            KeyFrame nextFrame = currentAnimation.keyFrames[0];
-
-            for(unsigned int i=1; i<currentAnimation.keyFrames.size(); i++){
-                nextFrame = currentAnimation.keyFrames[i];
-                if(nextFrame.timeStamp > animationTime){
-                    prevFrame = currentAnimation.keyFrames[i-1];
-                    break;
-                }
-            }
-
-            std::vector<KeyFrame> result;
-            result.push_back(prevFrame);
-            result.push_back(nextFrame);
-            return result;
-        }
-
-        /**
-        *Calculates the progress between previous and next key-frame
-        */
-        float calculateProgress(std::vector<KeyFrame> prevAndNextframe){
-            float totalTime = prevAndNextframe[1].timeStamp - prevAndNextframe[0].timeStamp; //Time gap between next and previous
-            float currentTime = animationTime - prevAndNextframe[0].timeStamp; //time gap w.r.t previous key frame
-            return currentTime/totalTime;
-        }
-
-        /**
-        *Interpolates the joint map from previous and next key-frame
-        */
-        JointMap interpolateBones(KeyFrame prevframe, KeyFrame nextframe, float progress){
-            JointMap currentPose;
-            //Interpolate each transforms from key-frame joint map
-            for(unsigned int i=0; i<prevframe.jointTransforms.ids.size(); i++){
-                unsigned int jointID = prevframe.jointTransforms.ids[i];
-                JointTransform prevTransform = prevframe.jointTransforms.jointTransforms[i];//.getValue(jointID);
-                JointTransform nextTransform = nextframe.jointTransforms.jointTransforms[i];//.getValue(jointID);
-                JointTransform currentTransform = JointTransform::interpolate(prevTransform,nextTransform,progress);
-                currentPose.pushValue(currentTransform, jointID);
-            }
-            return currentPose;
-        }
-
-        /**
-        *Calculates and returns the current pose depending upon time and key frame
-        */
-        JointMap calculateCurrentPose(){
-            std::vector<KeyFrame> frames = getNextAndPreviousFrame();
-            float progress = calculateProgress(frames);
-            return interpolateBones(frames[0], frames[1], progress);
-            //return interpolateBones(currentAnimation.keyFrames[0], currentAnimation.keyFrames[1], 0.0);
-        }
-
-        /**
-        *Applies the joint transformation to joint
-        */
-        void applyPoseToJoints(Joint& rootJoint, JointMap pose, glm::mat4 parentTransform){
-            //Accessing the transformation from current pose using name of root joint
-            glm::mat4 localTransformation = pose.getValue(rootJoint.id).getLocalTransform();
-            glm::mat4 currentTransform = parentTransform*localTransformation;
-            rootJoint.animatedTransform = currentTransform*rootJoint.invertedBindTransform;
-            //Apply pose to all children joints
-            for(unsigned int i=0; i<rootJoint.children.size(); i++){
-                applyPoseToJoints(rootJoint.children[i], pose, currentTransform);
-            }
-        }
-    public:
-        void setAnimation(Animation animation){
-            animationTime = 0.0;
-            currentAnimation = animation;
-        }
-
-         void animate(int fps, Joint& rootJoint){
-            increaseTime(fps);
-            JointMap pose = calculateCurrentPose();
-            applyPoseToJoints(rootJoint, pose, glm::mat4(1.0));
-        }
-
-    };
-
-    //Represents each joint in the hierarchy
-    struct JointHeirarchy{
-        std::vector<unsigned int> position;//Position in hierarchy
-        std::string name;//Name in hierarchy
-        unsigned int id;
-    };
-
-    //Represents each animation data of a joint
-    struct AnimationIO{
-        std::vector<glm::mat4> transforms;//Bind transformations at different time-steps
-    };
-
-    //Model that can be animated
-    class AnimatedModel{
-    private:
-        OpenGL::VertexArray va;
-        OpenGL::VertexBuffer vb;
-        OpenGL::Texture texture;
-        Joint rootJoint;
-        unsigned int vertexCount;
-        Animator animator;//Animates the current animation
-        //std::vector<Animation> animations;//List of all animations model can have
-        std::vector<glm::mat4> transformations;//Transformation of joints arranged according to its id
-        static OpenGL::Shader shader;//Shader to be applied in model
-
-        /**
-        *Takes the string and returns the vector containing the strings splitting string by @param character
-        */
-        static std::vector<std::string> splitString(std::string str, char delim = ' '){
-            std::vector<std::string> strData;
-            std::string tempString = "";
-            for(int i=0; str[i]!='\0'; i++){
-                if(str[i] == delim){
-                    strData.push_back(tempString);
-                    tempString = "";
-                    continue;
-                }
-                tempString += str[i];
-            }
-            strData.push_back(tempString);
-            return strData;
-        }
-
-        /**
-        *Removes all repetitive first characters from the string
-        */
-        static std::string removeAllFirstCharacter(std::string str){
-            std::string data = "";
-            int lastI;
-            char character = str[0];
-
-            //Find the index at which character ends
-            for(unsigned int i=1; i<str.size(); i++){
-                if(str[i] != character){
-                    lastI = i;
-                    break;
-                }
-            }
-
-            //Start copying data from that index
-            for(unsigned int i=lastI; i<str.size(); i++){
-                data += str[i];
-            }
-            return data;
-        }
-
-        /**
-        *Reads Collada file format and loads the data to VAO and joints
-        */
-        void parseCollada(std::string colladaFile){
-            //Specifying the library-types
-            enum {
-             NONE = -1, GEOMETRY, ANIMATIONS, CONTROLLERS, SCENES
-            };
-
-            std::string line;
-            std::ifstream stream(colladaFile.c_str());
-            int libraryType = NONE;
-
-            std::vector<AnimationData> vertices;
-            std::vector<glm::vec3> positions;
-            std::vector<glm::vec3> normals;
-            std::vector<glm::vec2> uvs;
-
-            std::vector<unsigned int> indicesCounts;
-            std::vector<unsigned int> indices;
-
-            std::vector<glm::mat4> inverseBindTransforms;//Position of joint
-            std::vector<float> weightsArray;
-            std::vector<unsigned int> weightCounts;
-            std::vector<unsigned int> weightIndices;
-            std::vector<glm::uvec3> jointIds;
-            std::vector<glm::vec3> jointWeights;
-
-            std::vector<JointHeirarchy> heirarchy;//Hierarchy of joints
-            std::vector<unsigned int> currentPosition;//Current Position in hierarchy
-            unsigned int newChildPosition = 0;//(one step more is stored for child which may be needed)
-            bool heirarchyStarted = false;
-            bool consecutiveNodes = false;
-            std::string currentName;
-
-            bool timeStepsLoaded = false;//To ensure that time steps are loaded only one
-            std::vector<AnimationIO> jointDatas;//To store the different animation poses of different joints
-            std::vector<float> timeSteps;//Stores the time steps in keyFrame
-
-            if(stream == NULL){
-                std::cout << "Warning::Cannot Read File:"<< colladaFile << std::endl;
-            }
-
-            //Reading the data from file to vectors
-            while(getline(stream, line) != NULL){
-                //Remove all white spaces before
-                line = removeAllFirstCharacter(line);
-                //Specifying the library type
-                if(line.find("<library_geometries>") != std::string::npos){
-                    libraryType = GEOMETRY;
-                }
-                else if(line.find("<library_animations>") != std::string::npos){
-                    libraryType = ANIMATIONS;
-                }
-                else if(line.find("<library_controllers>") != std::string::npos){
-                    libraryType = CONTROLLERS;
-                }
-                else if(line.find("<library_visual_scenes>") != std::string::npos){
-                    libraryType = SCENES;
-                }
-
-                //If Geometry Library is selected and vertex data then
-                //Parsing geometry data
-                else if((line.find("float_array") != std::string::npos)
-                        && (line.find("positions-array") != std::string::npos)
-                        && (libraryType == GEOMETRY)){
-                    //<float_array id="Cube-mesh-positions-array" count="2220">0.3735479
-                    std::vector<std::string> datas = splitString(line);
-                    std::vector<std::string> temp = splitString(datas[2], '"');
-                    std::string num_data = temp[1];
-                    unsigned int number;
-                    {
-                        std::stringstream num_ss(num_data);
-                        num_ss >> number;
-                    }
-
-                    float position_array[3];
-                    unsigned int array_pos;
-                    //Reading first value
-                    temp[2] = removeAllFirstCharacter(temp[2]);
-                    {
-                        std::stringstream num_ss(temp[2]);
-                        num_ss >> position_array[0];
-                        array_pos = 1;
-                    }
-                    for(unsigned int i=1; i<(number+1);i++){
-                        //Loading the data to position vector
-                        std::stringstream num_ss(datas[i+2]);
-                        num_ss >> position_array[array_pos];
-                        array_pos++;
-
-                        if(array_pos >=3){
-                            positions.push_back(glm::vec3(position_array[0], position_array[1], position_array[2]));
-                            array_pos = 0;
-                        }
-                    }
-                }
-                else if((line.find("float_array") != std::string::npos)
-                        && (line.find("normals-array") != std::string::npos)
-                        && (libraryType == GEOMETRY)){
-                    //<float_array id="Cube-mesh-normals-array" count="4224">0.2117975
-                    std::vector<std::string> datas = splitString(line);
-                    std::vector<std::string> temp = splitString(datas[2], '"');
-                    std::string num_data = temp[1];
-                    unsigned int number;
-                    {
-                        std::stringstream num_ss(num_data);
-                        num_ss >> number;
-                    }
-
-                    float normal_array[3];
-                    unsigned int array_pos;
-                    //Reading first value
-                    temp[2] = removeAllFirstCharacter(temp[2]);
-                    {
-                        std::stringstream num_ss(temp[2]);
-                        num_ss >> normal_array[0];
-                        array_pos = 1;
-                    }
-                    for(unsigned int i=1; i<(number+1);i++){
-                        //Loading the data to normal vector
-                        std::stringstream num_ss(datas[i+2]);
-                        num_ss >> normal_array[array_pos];
-                        array_pos++;
-
-                        if(array_pos >=3){
-                            normals.push_back(glm::vec3(normal_array[0], normal_array[1], normal_array[2]));
-                            array_pos = 0;
-                        }
-                    }
-                }
-                else if((line.find("float_array") != std::string::npos)
-                        && (line.find("map-0-array") != std::string::npos)
-                        && (libraryType == GEOMETRY)){
-                    //<float_array id="Cube-mesh-map-0-array" count="8520">0.7784072
-                    std::vector<std::string> datas = splitString(line);
-                    std::vector<std::string> temp = splitString(datas[2], '"');
-                    std::string num_data = temp[1];
-                    unsigned int number;
-                    {
-                        std::stringstream num_ss(num_data);
-                        num_ss >> number;
-                    }
-
-                    float uv_array[2];
-                    unsigned int array_pos;
-                    //Reading first value
-                    temp[2] = removeAllFirstCharacter(temp[2]);
-                    {
-                        std::stringstream num_ss(temp[2]);
-                        num_ss >> uv_array[0];
-                        array_pos = 1;
-                    }
-                    for(unsigned int i=1; i<(number+1);i++){
-                        //Loading the data to uv vector
-                        std::stringstream num_ss(datas[i+2]);
-                        num_ss >> uv_array[array_pos];
-                        array_pos++;
-
-                        if(array_pos >=2){
-                            uvs.push_back(glm::vec2(uv_array[0], uv_array[1]));
-                            array_pos = 0;
-                        }
-                    }
-                }
-                else if((line.find("<vcount>") != std::string::npos)
-                        && (libraryType == GEOMETRY)){
-                    std::vector<std::string> datas = splitString(line);
-                    std::vector<std::string> temp = splitString(datas[0], '>');
-                    std::string num_data = temp[1];
-
-                    unsigned int number;
-                    //Reading first number
-                    {
-                        std::stringstream num_ss(num_data);
-                        num_ss >> number;
-                        indicesCounts.push_back(number);                }
-                    for(unsigned int i=1; i<(datas.size()-1);i++){
-                        //Loading the data to uv vector
-                        std::stringstream num_ss(datas[i]);
-                        num_ss >> number;
-                        indicesCounts.push_back(number);
-                    }
-                }
-                else if((line.find("<p>") != std::string::npos)
-                        && (libraryType == GEOMETRY)){
-                    //<p>97
-                    std::vector<std::string> datas = splitString(line);
-                    std::vector<std::string> temp = splitString(datas[0], '>');
-                    std::string num_data = temp[1];
-
-                    unsigned int number;
-                    //Reading first number
-                    {
-                        std::stringstream num_ss(num_data);
-                        num_ss >> number;
-                        indices.push_back(number);
-                    }
-                    for(unsigned int i=1; i<datas.size();i++){
-                        //Loading the data to uv vector
-                        std::stringstream num_ss(datas[i]);
-                        num_ss >> number;
-                        indices.push_back(number);
-                    }
-                }
-
-                //Parsing the animation data
-                else if((line.find("float_array id=") != std::string::npos)
-                        && (line.find("pose_matrix-input-array") != std::string::npos)
-                        && (libraryType == ANIMATIONS)
-                        && !timeStepsLoaded){
-                    //<float_array id="Armature_Torso_pose_matrix-input-array" count="5">0 0.2083333 0.4166666 0.625 0.8333333</float_array>
-                    std::vector<std::string> datas = splitString(line);
-                    std::vector<std::string> temp = splitString(datas[2], '>');
-
-                    std::stringstream ss_data(temp[1]);
-                    float step;
-                    ss_data>>step;
-                    timeSteps.push_back(step);
-
-                    for(unsigned int i=1; i<(datas.size()-2); i++){
-                        std::stringstream ss_datum(datas[i+2]);
-                        ss_datum>>step;
-                        timeSteps.push_back(step);
-                    }
-                    timeStepsLoaded = true;
-                }
-                else if((line.find("float_array id=") != std::string::npos)
-                        && (line.find("pose_matrix-output-array") != std::string::npos)
-                        && (libraryType == ANIMATIONS)){
-                    //<float_array id="Armature_Torso_pose_matrix-output-array" count="80">1 0 0 ....0 0 1</float_array>
-                    std::vector<std::string> datas = splitString(line);
-                    std::vector<std::string> temp = splitString(datas[2], '>');
-                    std::stringstream ss_data(temp[1]);
-                    float value;
-                    ss_data>>value;
-                    glm::mat4 currentPose;
-                    currentPose[0][0] = value;
-
-                    std::vector<glm::mat4> poses;
-                    for(unsigned int i=1; i<(datas.size()-2); i++){
-                        std::stringstream ss_datum(datas[i+2]);
-                        ss_datum>>value;
-                        unsigned int matPos = i%16;
-                        unsigned int row = matPos%4;
-                        unsigned int column = matPos/4;
-                        currentPose[row][column] = value;
-
-                        //If all value of matrix is loaded
-                        if(matPos == 15){
-                            poses.push_back(currentPose);
-                            currentPose = glm::mat4(1.0);
-                        }
-                    }
-                    AnimationIO tempAnimationIO;
-                    tempAnimationIO.transforms = poses;
-                    jointDatas.push_back(tempAnimationIO);
-                }
-
-                //Reading skeletal information
-                //Reading the name of joints (its index will be id)
-
-                //Reading Inverse Bind Transformation here
-                else if((line.find("float_array") != std::string::npos)
-                        && (line.find("poses-array") != std::string::npos)
-                        && (libraryType == CONTROLLERS)){
-                    //<float_array id="Armature_Cube-skin-bind_poses-array" count="256">1 0 0...
-                    std::vector<std::string> datas = splitString(line);
-                    std::vector<std::string> temp = splitString(datas[2], '>');
-                    std::stringstream ss_firstData(temp[1]);
-                    glm::mat4 eachInverseBind = glm::mat4(1.0);
-                    float num;
-                    ss_firstData>>num;
-                    eachInverseBind[0][0] = num;
-
-                    for(unsigned int i=1; i<(datas.size()-2); i++){
-                        std::stringstream ss_data(datas[i+2]);
-                        ss_data>>num;
-                        unsigned int matPos = i%16;
-                        unsigned int row = matPos%4;
-                        unsigned int column = matPos/4;
-                        eachInverseBind[row][column] = num;
-
-                        //If all value of matrix is loaded
-                        if(matPos == 15){
-                            inverseBindTransforms.push_back(eachInverseBind);
-                            eachInverseBind = glm::mat4(1.0);
-                        }
-                    }
-                }
-                else if((line.find("float_array") != std::string::npos)
-                        && (line.find("weights-array") != std::string::npos)
-                        && (libraryType == CONTROLLERS)){
-                    //<float_array id="Armature_Cube-skin-weights-array" count="1393">1 1
-                    std::vector<std::string> datas = splitString(line);
-                    std::vector<std::string> temp = splitString(datas[2], '>');
-                    std::stringstream ss_firstData(temp[1]);
-                    float num;
-                    ss_firstData>>num;
-                    weightsArray.push_back(num);
-
-                    for(unsigned int i=1; i<(datas.size()-2); i++){
-                        std::stringstream ss_data(datas[i+2]);
-                        ss_data>>num;
-                        weightsArray.push_back(num);
-                    }
-
-                }
-                else if((line.find("<vcount>") != std::string::npos)
-                        && (libraryType == CONTROLLERS)){
-                    //<vcount>1 1 1 1 1 .....  1 1 1 1 </vcount>
-                    std::vector<std::string> datas = splitString(line);
-                    std::vector<std::string> temp = splitString(datas[0], '>');
-                    std::stringstream ss_firstData(temp[1]);
-                    unsigned int num;
-                    ss_firstData>>num;
-                    weightCounts.push_back(num);
-
-                    for(unsigned int i=1; i<(datas.size()-1); i++){
-                        std::stringstream ss_data(datas[i]);
-                        ss_data>>num;
-                        weightCounts.push_back(num);
-                    }
-
-                }
-                else if((line.find("<v>") != std::string::npos)
-                        && (libraryType == CONTROLLERS)){
-                    //<v>3 2.....1392</v>
-                    std::vector<std::string> datas = splitString(line);
-                    std::vector<std::string> temp = splitString(datas[0], '>');
-                    std::stringstream ss_firstData(temp[1]);
-                    unsigned int num;
-                    ss_firstData>>num;
-                    weightIndices.push_back(num);
-
-                    for(unsigned int i=1; i<(datas.size()); i++){
-                        std::stringstream ss_data(datas[i]);
-                        ss_data>>num;
-                        weightIndices.push_back(num);
-                    }
-
-                }
-
-
-                //Make sure that its inverse bind matrix is calculated properly
-                else if((line.find("<node id=\"Armature\"") != std::string::npos)
-                        && (libraryType == SCENES)){
-                            heirarchyStarted = true;
-                }
-                else if((line.find("<node id=") != std::string::npos)
-                        && (libraryType == SCENES)
-                        && heirarchyStarted){
-                        //<node id="Torso" name="Torso" sid="Torso" type="JOINT">
-                        std::vector<std::string> datas = splitString(line);
-                        std::vector<std::string> temp = splitString(datas[2], '"');
-                        currentName = temp[1];
-
-                        if(consecutiveNodes)
-                            currentPosition.push_back(0);
-                        else
-                            currentPosition.push_back(newChildPosition);
-                        consecutiveNodes = true;
-                }
-                else if((line.find("matrix sid=\"transform\"") != std::string::npos)
-                        && (libraryType == SCENES)
-                        && heirarchyStarted){
-                        JointHeirarchy tempHeirarchy;
-                        tempHeirarchy.name = currentName;
-                        tempHeirarchy.position = currentPosition;
-                        heirarchy.push_back(tempHeirarchy);
-                }
-                else if((line.find("</node>") != std::string::npos)
-                        && (libraryType == SCENES)
-                        && heirarchyStarted){
-                        if(currentPosition.size()<1){
-                            newChildPosition = 0;
-                            continue;
-                        }
-                        unsigned int lastPosition = currentPosition.size()-1;
-                        newChildPosition = currentPosition[lastPosition]+1;
-                        currentPosition.pop_back();
-                        consecutiveNodes = false;
-                }
-            }
-
-            //Storing the weights and ids in vertex position manner
-            for(unsigned int i=0,j=0; i<weightCounts.size(); i++){
-                //i = position of weight index count
-                //j = position of weight and id
-                std::vector<float> temp_weights;
-                std::vector<unsigned int> temp_weightIDs;
-                glm::vec3 weights = glm::vec3(0.0);//Dominating weights of vertex
-                glm::uvec3 ids = glm::uvec3(0);//Dominating ids of weights
-
-                unsigned int weight_count = weightCounts[i];//Weight count of current vertex
-                //Storing the all weights and ids corresponding to vertex
-    //            for(unsigned int k=0; k<weight_count&&k<3; k++){
-    //                ids[k] = weightIndices[2*k+j];
-    //                weights[k] = weightIndices[2*k+j+1];
-    //            }
-
-                for(unsigned int k=0; k<weight_count; k++){
-                    temp_weightIDs.push_back(weightIndices[2*k+j]);
-                    temp_weights.push_back(weightsArray[weightIndices[2*k+j+1]]);
-                }
-
-                //Searching for dominating weights in that array
-                for(unsigned int k=0; k<temp_weights.size(); k++){
-                    unsigned int temp_id = temp_weightIDs[k];
-                    float temp_weight = temp_weights[k];
-
-                    //Putting weights in descending order
-                    //Selecting 3 major weights
-                    if(temp_weight>weights[0]){
-                        weights[2] = weights[1];
-                        weights[1] = weights[0];
-                        weights[0] = temp_weight;
-
-                        ids[2] = ids[1];
-                        ids[1] = ids[0];
-                        ids[0] = temp_id;
-                    }
-                    else if(temp_weight>weights[1]){
-                        weights[2] = weights[1];
-                        weights[1] = temp_weight;
-
-                        ids[2] = ids[1];
-                        ids[1] = temp_id;
-                    }
-                    else if(temp_weight>weights[2]){
-                        weights[2] = temp_weight;
-                        ids[2] = temp_id;
-                    }
-                }
-
-                //Normalizing the weights values
-                float sumWeights = weights.x+weights.y+weights.z;
-                weights = weights/sumWeights;
-                jointWeights.push_back(weights);
-                jointIds.push_back(ids);
-                j+= 2*weight_count;
-
-            }
-
-//            std::cout<<"Data Loaded"<<std::endl;
-//            std::cout<<"Positions = "<< positions.size()<<std::endl;
-//            std::cout<<"Normals = "<< normals.size()<<std::endl;
-//            std::cout<<"Uvs = "<< uvs.size() <<std::endl;
-//            std::cout<<"Indices = "<< indices.size() <<std::endl;
-//            std::cout<<"Indices Counts = "<< indicesCounts.size() <<std::endl;
-//            std::cout<<"Joints found = " << jointNames.size() <<std::endl;
-//            std::cout<<"Joints weights found = " << weightsArray.size() <<std::endl;
-//            std::cout<<"Joints weights Counts found = " << weightCounts.size() <<std::endl;
-//            std::cout<<"Joints weights Indices found = " << weightIndices.size() <<std::endl;
-//            std::cout<<"Weights and id of "<<jointWeights.size()<<" vertex found"<<std::endl;
-
-            //Processing skin data
-            {
-                 //If counts are cont defined, takes as triangle face as default
-                if(indicesCounts.size() == 0){
-                    for(unsigned int j=0; j<indices.size(); j+=4*3){
-                        //i = position of index count
-                        //j = position of index
-                        AnimationData VAOdata;
-
-                        //Loading the data of each faces
-                        //Using only 3 vertices to make faces
-                        for(unsigned int k=0; k<3; k++){
-                            unsigned int position_index = indices[4*k+j];
-                            VAOdata.position =  positions[position_index];
-                            VAOdata.normals =   normals[indices[4*k+j+1]];
-                            VAOdata.uvs =       uvs[indices[4*k+j+2]];
-                            VAOdata.joints =    jointIds[position_index];
-                            VAOdata.weights =   jointWeights[position_index];
-
-                            vertices.push_back(VAOdata);
-                        }
-                    }
-                }
-                //Takes the face count but uses first 3 vertices to make triangle
-                else{
-                    for(unsigned int i=0,j=0; i<indicesCounts.size(); i++){
-                        //i = position of index count
-                        //j = position of index
-                        AnimationData VAOdata;
-
-                        //Loading the data of each faces
-                        //Using only 3 vertices to make faces
-                        for(unsigned int k=0; k<3; k++){
-                            unsigned int position_index = indices[4*k+j];
-                            VAOdata.position =  positions[position_index];
-                            VAOdata.normals =   normals[indices[4*k+j+1]];
-                            VAOdata.uvs =       uvs[indices[4*k+j+2]];
-                            VAOdata.joints =    jointIds[position_index];
-                            VAOdata.weights =   jointWeights[position_index];
-
-                            vertices.push_back(VAOdata);
-                        }
-                        j+=4*indicesCounts[i];
-                    }
-                }
-            }
-
-//            std::cout<<"Skin data loaded"<<std::endl;
-
-            unsigned int max_level = 0;//Finds maximum level of hierarchy
-            //Finding the level of root
-            for(unsigned int i=0; i<heirarchy.size(); i++){
-                if(max_level < heirarchy[i].position.size())
-                    max_level = heirarchy[i].position.size();
-            }
-
-            std::vector<Joint> parents;
-            std::vector<Joint> children;
-            std::vector<unsigned int> parentIndex;//Index of parents in hierarchy
-            std::vector<unsigned int> childIndex;//Index of child in hierarchy
-
-            //First load data of last level children
-             for(unsigned int j=0; j<heirarchy.size(); j++){
-                 if(heirarchy[j].position.size() == max_level){
-                     std::string name = heirarchy[j].name;
-                     //Searching for id of joint
-                     Joint tempJoint;
-                     tempJoint.name = name;
-                     tempJoint.id = j;
-                     tempJoint.invertedBindTransform = inverseBindTransforms[j];
-                     children.push_back(tempJoint);
-                     childIndex.push_back(j);
-                 }
-             }
-
-            //Then use child to push on parent and pass that as a children for next iteration
-            for(unsigned int i=max_level; i>=2; i--){
-                //Searching for parent
-                for(unsigned int j=0; j<heirarchy.size(); j++){
-                    if(heirarchy[j].position.size() == (i-1)){
-                        std::string name = heirarchy[j].name;
-                        Joint tempJoint;
-                        tempJoint.name = name;
-                        tempJoint.id = j;
-                        tempJoint.invertedBindTransform = inverseBindTransforms[j];
-                        parents.push_back(tempJoint);
-                        parentIndex.push_back(j);
-                    }
-                }
-
-                //Find out the corresponding parents of the children
-                for(unsigned int j=0; j<children.size(); j++){
-                    JointHeirarchy childHeirarchy = heirarchy[childIndex[j]];
-                    //Check for each parent if it is parent
-                    for(unsigned int l=0; l<parents.size(); l++){
-                        JointHeirarchy parentHeirarchy = heirarchy[parentIndex[l]];
-                        bool isParent = true;
-                        //Matching each step with parent
-                        for(unsigned int m=0; m<parentHeirarchy.position.size(); m++){
-                            if(parentHeirarchy.position[m] != childHeirarchy.position[m]){
-                                isParent = false;
-                                break;
-                            }
-                        }
-                        if(isParent){
-                            //If j-th child is the corresponding child of l-th parent
-                            parents[l].addChild(children[j]);
-                            break;
-                        }
-                    }
-                }
-
-                children.clear();
-                childIndex.clear();
-                //Making the parents children for next iteration
-                children = parents;
-                childIndex = parentIndex;
-                parents.clear();
-                parentIndex.clear();
-            }
-            //Assigning to root joint after its all done
-            rootJoint = children[0];
-            children.clear();
-            childIndex.clear();
-            parents.clear();
-            parentIndex.clear();
-
-//            std::cout<<"Skeletal data loaded"<<std::endl;
-
-            //Process the animation data into animation
-            Animation animation;
-            std::vector<KeyFrame> frames;
-            float length;
-
-            for(unsigned int i=0; i<jointDatas[0].transforms.size(); i++){
-                //i=transformation of each joints
-                //j=each joints
-                KeyFrame frame;
-                float timeStamp;
-                for(unsigned int j=0; j<jointDatas.size(); j++){
-                    glm::mat4 pose = jointDatas[j].transforms[i];
-                    JointTransform jointTransform = JointTransform::loadFromMatrix(pose);
-                    frame.addJointTransforms(jointTransform, j);
-                }
-                length = timeSteps[i];
-                frame.timeStamp = length;
-                frames.push_back(frame);
-                frame.jointTransforms.flushValues();
-            }
-            animation.keyFrames = frames;
-            animation.length = length;
-            animator.setAnimation(animation);
-
-//            std::cout<<"Animation Data Loaded"<<std::endl;
-
-            vb.loadData(&vertices[0], sizeof(AnimationData)*vertices.size());
-            vertexCount = vertices.size();
-
-            vertices.clear();
-            positions.clear();
-            normals.clear();
-            uvs.clear();
-            indicesCounts.clear();
-            indices.clear();
-
-            inverseBindTransforms.clear();
-            weightsArray.clear();
-            weightCounts.clear();
-            weightIndices.clear();
-            jointWeights.clear();
-            jointIds.clear();
-
-            heirarchy.clear();
-            currentPosition.clear();
-            jointDatas.clear();
-            timeSteps.clear();
-        }
-
-        void putTransforms(std::vector<glm::mat4>& container, Joint& joint){
-            //Put transformation of joint in container
-            container.push_back(joint.animatedTransform);
-            for(unsigned int i=0; i<joint.children.size(); i++){
-                putTransforms(container, joint.children[i]);
-            }
-        }
-
-    public:
-
-        void load(std::string colladaFile, std::string textureLocation){
-            //Parse collada into buffer
-            parseCollada(colladaFile);
-            OpenGL::VertexBufferLayout layout;
-            layout.pushFloat(3);//Position
-            layout.pushFloat(3);//Normal
-            layout.pushFloat(2);//UV
-            layout.pushUnsignedInt(3);//Joint IDs
-            layout.pushFloat(3);//Joint Weights
-            va.generateVertexArray();
-            va.addBuffer(vb, layout);
-
-            this->texture.loadTexture(textureLocation);
-        }
-
-        static void loadShader(std::string shaderLocation){
-            shader.loadShader(shaderLocation);
-        }
-
-        void cleanUP(){
-            va.deleteVertexArray();
-            vb.deleteVertexBuffer();
-            texture.deleteTexture();
-        }
-
-        void update(int fps){
-            animator.animate(fps, rootJoint);
-            transformations.clear();
-            putTransforms(transformations, rootJoint);
-            shader.bind();
-            shader.addUniformMat4fv("u_jointTransforms", &transformations[0][0][0], transformations.size());
-        }
-
-        void draw(glm::mat4 mvp){
-            shader.bind();
-            shader.addUniformMat4f("u_viewProjection", mvp);
-            shader.addUniform1i("u_slot", 0);
-            va.bind();
-            texture.bind();
-            GLCall(glDrawArrays(GL_TRIANGLES, 0, vertexCount));
-        }
-
-        static void deleteShader(){
-            shader.deleteShader();
-        }
-    };
-
+    glm::vec3 getPosition(){
+        return position;
+    }
+
+    glm::vec3 getRotationAxis(){
+        return rotation_axis;
+    }
+
+    void cleanUp(){
+        texture.deleteTexture();
+        sphere.cleanUp();
+    }
 };
 
-class Player{
+class PlanetInClose{
+private:
+    BumpySphere sphere;
+    //PlanetChunk chunk;
+    OpenGL::Texture diffusetexture;
+    glm::vec3 position;
+    float rotation;
+    glm::vec3 rotation_axis;
+    glm::vec3 velocity;
+
+public:
+    void loadPlanet(float radius, unsigned int segments, float maxHeight, std::string textureLocation, std::string bumpMap, float r_offset = 0){
+        rotation_axis = glm::vec3(0,1,0);
+        rotation = 0.0;
+        diffusetexture.loadTexture(textureLocation);
+        sphere.loadVertices(radius, maxHeight, bumpMap, segments);
+        //chunk.loadPlanetChunk(radius, chunkSize, maxHeight, chunk_segments, bumpMap, r_offset);
+    }
+
+    void setRotaion(float rot){
+        rotation = rot;
+        if(rotation>=360){
+            rotation = 0;
+        }
+    }
+
+    void increaseRotation(float delta){
+        rotation += delta;
+        if(rotation>=360){
+            rotation = 0;
+        }
+    }
+
+    void setPosition(glm::vec3 pos){
+        position = pos;
+    }
+
+    void drawPlanet(OpenGL::Shader& shader, glm::mat4 viewProjection){
+        glm::mat4 model=glm::mat4(1.0f);
+        model = glm::translate(model, position);
+        model = glm::rotate(model, glm::radians(rotation), rotation_axis);
+
+        shader.bind();
+        shader.addUniformMat4f("u_model", model);
+        model = viewProjection*model;
+        shader.addUniformMat4f("u_MVP", model);
+        diffusetexture.bind();
+        sphere.draw(shader);
+    }
+
+    glm::vec3 getPosition(){
+        return position;
+    }
+
+    void cleanUp(){
+        diffusetexture.deleteTexture();
+        sphere.cleanUp();
+    }
+};
+
+class Spaceship{
 private:
     glm::vec3 position;
-    float y_rotation;
-    const float velocity = 0.20f;
+    glm::vec3 direction;
+    glm::dvec3 acceleration;
+    const double acceleration_mag = 1e3;//Acceleration is in space-time reference
+    float yaw;
+    float pitch;
     ObjMesh body;
     OpenGL::Texture texture;
 
@@ -3024,24 +2463,27 @@ public:
         position = pos;
     }
 
-    void setDirection(float rot){
-        y_rotation = rot;
-    }
-
-    glm::vec3 getFocusPosition(){
-        glm::vec3 focus = position;
-        focus.x -= 0.225*sin(glm::radians(y_rotation));
-        focus.z -= 0.225*cos(glm::radians(y_rotation));
-        focus.y += 1.3;
-        return focus;
+    void setDirection(glm::vec3 dir){
+        if(dir.x==0.0 && dir.y==0.0 && dir.z==0.0){
+            return;
+        }
+        direction = glm::normalize(dir);
     }
 
     glm::vec3 getPosition(){
         return position;
     }
 
-    float getRotation(){
-        return y_rotation;
+    glm::vec3 getDirection(){
+        return direction;
+    }
+
+    float getYaw(){
+        return yaw;
+    }
+
+    float getPitch(){
+        return pitch;
     }
 
     void loadFiles(std::string objPath, std::string texturePath, float scaling = 1){
@@ -3049,30 +2491,29 @@ public:
         texture.loadTexture(texturePath);
     }
 
-    void moveForward(Terrain terrain){
-        position -= glm::vec3(velocity*sin(glm::radians(y_rotation)), 0.0, velocity*cos(glm::radians(y_rotation)));
-        position.y = terrain.getHeightAt(position.x, position.z);
+    void moveForward(){
+        this->acceleration = acceleration_mag*glm::dvec3(this->direction);
+    }
+/**
+    void moveRight(glm::vec3 upVec = glm::vec3(0.0, 1.0, 0.0)){
+        glm::vec3 right = glm::normalize(glm::cross(direction, upVec));
+        position += velocity*right;
     }
 
-    void moveBackward(Terrain terrain){
-        position += glm::vec3(velocity*sin(glm::radians(y_rotation)), 0.0, velocity*cos(glm::radians(y_rotation)));
-        position.y = terrain.getHeightAt(position.x, position.z);
+    void moveLeft(glm::vec3 upVec = glm::vec3(0.0, 1.0, 0.0)){
+        glm::vec3 right = glm::normalize(glm::cross(direction, upVec));
+        position -= velocity*right;
     }
+*/
+    void draw(OpenGL::Shader shader, glm::mat4 viewProj){
+		glm::mat4 model = glm::mat4(1.0);
+		model = glm::translate(model, position);
+        model = model*glm::inverse(glm::lookAt(glm::vec3(0.0, 0.0, 0.0), direction, glm::vec3(0.0, 1.0, 0.0)));
+		glm::mat4 mvp = viewProj*model;
 
-    void moveRight(Terrain terrain){
-        y_rotation -= 90;
-        moveForward(terrain);
-        y_rotation += 90;
-    }
-
-    void moveLeft(Terrain terrain){
-        y_rotation += 90;
-        moveForward(terrain);
-        y_rotation -= 90;
-    }
-
-    void draw(OpenGL::Shader shader){
         shader.bind();
+        shader.addUniformMat4f("u_model", model);
+        shader.addUniformMat4f("u_MVP", mvp);
         texture.bind();
         body.bindArray();
         GLCall(glDrawArrays(GL_TRIANGLES, 0, body.getVertexCount()));
@@ -3084,203 +2525,10 @@ public:
     }
 };
 
-class Camera{
-private:
-    glm::vec3 position;
-    glm::vec3 camDirection;
-    float yaw = 0.0;
-    float pitch = 15.0;
-    float roll = 0.0;
-    const float sensitivity = 0.125f;
-    const float MAX_DISTANCE = 4.0f;
-    //const float MAX_DISTANCE = 20.0f;
-    const float MIN_DISTANCE = 0.0f;
-    float distance = MAX_DISTANCE;
-
-    void limitAngleToPositive(float& angle){
-        if(angle>360)
-            angle -= 360;
-        if(angle<0)
-            angle +=360;
-    }
-
-    void recalculateDistance(){
-        if(pitch >=0)
-            distance = MAX_DISTANCE;
-        else{
-            float slope = (MAX_DISTANCE - MIN_DISTANCE)/89.0;
-            distance = slope * pitch + MAX_DISTANCE;
-        }
-    }
-
-public:
-    void setYaw(float yaw){
-        this->yaw = yaw;
-    }
-
-    void setPitch(float pitch){
-        this->pitch = pitch;
-    }
-
-    void increaseYaw(float delta = 1){
-        yaw += sensitivity*delta;
-        limitAngleToPositive(yaw);
-    }
-
-    void increasePitch(float delta = 1){
-        pitch += sensitivity*delta;
-        if(pitch > 75)
-            pitch = 75;
-        else if(pitch < -80)
-            pitch = -80;
-
-        recalculateDistance();
-    }
-
-    float getNewPlayerRotation(Player player){
-        float result = player.getRotation()+yaw;
-        limitAngleToPositive(result);
-        yaw = 0;
-        return result;
-    }
-
-    void setPosition(glm::vec3 pos){
-        position = pos;
-    }
-
-    glm::vec3 getPosition(){
-        return position;
-    }
-
-    glm::vec3 getDirection(){
-        return camDirection;
-    }
-
-    void follow(Player player){
-        glm::vec3 playerPos = player.getFocusPosition();
-        float horizontal = distance*cos(glm::radians(pitch));
-        float vertical = distance*sin(glm::radians(pitch));
-        float theta = player.getRotation() + yaw;
-        float x_offset = horizontal*sin(glm::radians(theta));
-        float z_offset = horizontal*cos(glm::radians(theta));
-
-        position.x = playerPos.x + x_offset;
-        position.y = playerPos.y + vertical;
-        position.z = playerPos.z + z_offset;
-
-        camDirection = glm::vec3(x_offset, vertical, z_offset);
-        camDirection = glm::normalize(camDirection);
-    }
-
-    glm::mat4 getViewMatrix(){
-        glm::vec3 camRight = glm::normalize(glm::cross(glm::vec3(0.0, 1.0, 0.0), camDirection));
-        glm::vec3 camUp = glm::cross(camDirection, camRight);
-
-        glm::vec2 translation = glm::normalize(glm::vec2(camDirection.z, -camDirection.x));
-        translation *= 0.45;
-        position = position + glm::vec3(translation.x, 0.0, translation.y);
-
-        glm::mat4 first = glm::transpose(glm::mat4( glm::vec4(camRight, 0.0),
-                                                    glm::vec4(camUp, 0.0),
-                                                    glm::vec4(camDirection, 0.0),
-                                                    glm::vec4(glm::vec3(0.0), 1.0)));
-        glm::mat4 second = glm::mat4(1.0);
-        second[3] = glm::vec4(-position, 1.0);
-
-        /*
-        view  = |  Rx Ry  Rz  0.0 |   | 1.0 0.0 0.0 -Px |
-                |  Ux Uy  Uz  0.0 | * | 0.0 1.0 0.0 -Py |
-                |  Dx Dy  Dz  0.0 |   | 0.0 0.0 1.0 -Pz |
-                |  0  0   0   1.0 |   | 0.0 0.0 0.0 1.0 |
-        */
-        return first*second;
-    }
-
-    void invertPitch(){
-        pitch *= -1;
-    }
-
-};
-
-class FPSManager{
-private:
-    int targetFPS;
-    int countedFPS;
-    double initial_time;
-    double final_time;
-public:
-    FPSManager(int targetFPS){
-        this->targetFPS = targetFPS;
-        this->countedFPS = targetFPS;
-    }
-
-    /**
-    *Sets the FPS to be limited
-    */
-    void setTargetFPS(int targetFPS){
-        this->targetFPS = targetFPS;
-        this->countedFPS = targetFPS;
-    }
-
-    /**
-    *Updates the counting of fps and can display too
-    */
-    void updateCounter(bool displayFPS=false){
-        static int frameCount = 0;
-        static double lastCountTime = glutGet(GLUT_ELAPSED_TIME);
-        float timefromLastCount = glutGet(GLUT_ELAPSED_TIME)-lastCountTime;
-        //If more than one second is elapsed
-        if( timefromLastCount >= 1000.0){
-            countedFPS = frameCount;
-            //Resets frame counter and sets time reference for time count
-            frameCount = 0;
-            lastCountTime = glutGet(GLUT_ELAPSED_TIME);
-
-            if(displayFPS){
-                std::cout<<"Counted FPS = "<<countedFPS<<std::endl;
-            }
-        }
-        frameCount++;
-    }
-
-    /**
-    *Initiate at the starting of display
-    *Necessary to limit FPS
-    */
-    void initiateTimer(){
-        initial_time = glutGet(GLUT_ELAPSED_TIME);
-    }
-
-    /**
-    *Timer should have been initiated for this to work
-    */
-    void limitFPS(bool useCountedFPS=true, bool showWarning=true){
-        //Limiting FPS
-//        float targetTime = 1000.0/float(targetFPS);
-//        int frame_lag_in_second = targetFPS - countedFPS;
-//        float time_per_frame = 2000.0/float(targetFPS+countedFPS);
-//        float frame_lag_per_frame = frame_lag_in_second*time_per_frame/1000.0;
-//        float time_lag_per_frame = useCountedFPS?(frame_lag_per_frame*time_per_frame):0;
-
-        float offset = 0.95;
-        float targetTime = 1000.0/float(targetFPS);
-        int frame_lag_in_second = targetFPS - countedFPS;
-        float time_lag_per_frame = useCountedFPS?(offset+2.0*float(frame_lag_in_second)/float(targetFPS+countedFPS)):0;
-
-        final_time = glutGet(GLUT_ELAPSED_TIME);
-        double delay_time =  targetTime - (final_time-initial_time) - time_lag_per_frame;
-        if(delay_time > 0)   Sleep(delay_time);
-        else if(showWarning) std::cout<<"Warning: FPS lagging this frame!!!"<<std::endl;
-    }
-
-    /**
-    *Returns the counted FPS
-    */
-    int getCountedFPS(){
-        return countedFPS;
-    }
-};
-
+/**
+*Please consider initializing shader as OpenGL::Shader GUI::shader;
+*You should use specify shader as GUI::specifyShader(shaderLocation);
+*/
 class GUI{
 private:
     static OpenGL::Shader shader;
@@ -3340,161 +2588,102 @@ public:
     }
 };
 
-struct PosUV{
-    glm::vec3 position;
+/**
+*Vertex Data type of vertex containing only Position, UV & ID
+*/
+struct PosUvID{
+    glm::vec2 position;
     glm::vec2 uv;
+    unsigned int id;
 };
 
-/**
-*Logic:
-*      -Render the scene above the water level and flip it for reflection
-*      -Render the scene below the water level for refraction
-*      -Use dudv maps to distort combined texture and also make distortion vary with time
-*      -Use normal maps to vary its lighting behaviour
-*      -And thats all!!!
-*/
-class Water{
+//TODO: Complete the lens flare calculations
+class LensFlare{
 private:
-    OpenGL::FrameBuffer reflectionFrame;
-    OpenGL::FrameBuffer refractionFrame;
+    OpenGL::Shader shader;
     OpenGL::VertexArray va;
     OpenGL::VertexBuffer vb;
-    OpenGL::IndexBuffer ib;
-    OpenGL::Texture reflectionTexture;
-    OpenGL::Texture refractionTexture;
-    OpenGL::Texture dudv;
-    OpenGL::Texture normal;
-    OpenGL::Texture depth;
-    static OpenGL::Shader waterShader;
-    int width,height;
-    const float waveSpeed = 0.005;
-    float moveFactor = 0.0;
-    float waterLevel;
+    std::vector<OpenGL::Texture> textures;
+    std::vector<glm::vec2> gui_sizes;
+    float spacing;
+    bool flareActive;
 
 public:
-    void loadData(glm::vec3 position, glm::vec2 size,int width,int height,int screenWidth,int screenHeight,
-                  std::string dudvLoacation, std::string normalMapLocation){
-        this->width = width;
-        this->height = height;
-        this->waterLevel = position.y;
-
-        std::vector<PosUV> vertices;
-        vertices.push_back({glm::vec3(position.x-size.x, position.y, position.z+size.y), glm::vec2(0, 0)});
-        vertices.push_back({glm::vec3(position.x+size.x, position.y, position.z+size.y), glm::vec2(1, 0)});
-        vertices.push_back({glm::vec3(position.x+size.x, position.y, position.z-size.y), glm::vec2(1, 1)});
-        vertices.push_back({glm::vec3(position.x-size.x, position.y, position.z-size.y), glm::vec2(0, 1)});
-
-        std::vector<unsigned int> indices;
-        indices.push_back(0);
-        indices.push_back(1);
-        indices.push_back(2);
-        indices.push_back(2);
-        indices.push_back(3);
-        indices.push_back(0);
-
-        va.generateVertexArray();
-        vb.loadData(&vertices[0], sizeof(PosUV)*vertices.size());
+    void load(std::vector<glm::vec2> gui_sizes, float spacing, std::vector<std::string> textureLocations, std::string shaderLocation){
+        this->gui_sizes = gui_sizes;
+        this->spacing = spacing;
+        flareActive = false;
+        //Allocating the memory for every GUIs to be drawn
+        vb.allocateDynamically(4*gui_sizes.size()*sizeof(PosUvID));
         OpenGL::VertexBufferLayout layout;
-        layout.pushFloat(3);
         layout.pushFloat(2);
+        layout.pushFloat(2);
+        va.generateVertexArray();
         va.addBuffer(vb, layout);
-        ib.loadData(&indices[0], indices.size());
-        vertices.clear();
-        indices.clear();
 
-        reflectionFrame.generateFrameBuffer();
-        reflectionFrame.bind(width, height);
-        reflectionTexture.loadCreatedTexture(reflectionFrame.AttachColorTexture(width, height));
+        //Loading the textures for each quads
+        for(unsigned int i=0; i<textureLocations.size(); i++){
+            OpenGL::Texture texture;
+            texture.loadTexture(textureLocations[i]);
+            textures.push_back(texture);
+        }
 
-        refractionFrame.generateFrameBuffer();
-        refractionFrame.bind(width, height);
-        refractionTexture.loadCreatedTexture(refractionFrame.AttachColorTexture(width, height));
-        depth.loadCreatedTexture(refractionFrame.AttachDepthTexture(width, height));
-
-        refractionFrame.unbind(screenWidth, screenHeight);
-        dudv.loadTexture(dudvLoacation);
-        normal.loadTexture(normalMapLocation);
+        //Specifying the shader
+        shader.loadShader(shaderLocation);
     }
 
-    static void loadShader(std::string filePath, glm::vec3 lightColor, glm::vec3 lightDirection, float cameraNear, float cameraFar){
-        Water::waterShader.loadShader(filePath);
-        Water::waterShader.bind();
-        Water::waterShader.addUniform1i("u_reflectionSampler", 0);
-        Water::waterShader.addUniform1i("u_refractionSampler", 1);
-        Water::waterShader.addUniform1i("u_dudvSampler", 2);
-        Water::waterShader.addUniform1i("u_normalSampler", 3);
-        Water::waterShader.addUniform1i("u_depthSampler", 4);
+    void updateBuffers(glm::vec3 lightPosition, glm::mat4 viewProj){
+        //Position of light in normalized device space
+        flareActive = true;
+        glm::vec4 lightInNds = viewProj*glm::vec4(lightPosition, 1.0);
+        if(lightInNds.w<=0){
+            flareActive = false;
+            return;
+        }
+        lightInNds /= lightInNds.w;
 
-        float color[] = {lightColor.x, lightColor.y, lightColor.z};
-        lightDirection = glm::normalize(lightDirection);
-        float direction[] = {lightDirection.x, lightDirection.y, lightDirection.z};
+        //Distance of light in normalized device space to calculate the brightness
+        float distance_from_centr = sqrt(lightInNds.x*lightInNds.x+lightInNds.y*lightInNds.y);
+        float brightness = (1-distance_from_centr)/(1+3*distance_from_centr);
 
-        Water::waterShader.addUniform3f("u_lightColor", color);
-        Water::waterShader.addUniform3f("u_lightDirection", direction);
-        Water::waterShader.addUniform1f("near", cameraNear);
-        Water::waterShader.addUniform1f("far", cameraFar);
+
+        for(unsigned int i=0; i<gui_sizes.size(); i++){
+            glm::vec3 direction= -glm::vec3(lightInNds);
+            //Position of each flare  = sunPosition+i*spacing*direction
+        }
+
+
+        //Calculate the position of light in normalized screen co-ordinate space
+        //Recalculate the buffers and load the data
     }
 
-    void startReflectionTexture(){
-        reflectionFrame.bind(width, height);
-    }
+    void draw(){
+        if(!flareActive){
+            return;
+        }
 
-    void stopTexture(int screenWidth, int screenHeight){
-        reflectionFrame.unbind(screenWidth, screenHeight);
-    }
-
-    void startRefractionTexture(){
-        refractionFrame.bind(width, height);
-    }
-
-    float getWaterLevel(){
-        return waterLevel;
-    }
-
-    /**
-    *Don't use draw function when reflection texture is not stopped
-    */
-    void draw(glm::mat4 model, glm::mat4 view, glm::mat4 projection, glm::vec3 viewPosition, int fps){
-        Window::enableAlphaBlending();
-        moveFactor += waveSpeed/(float)fps;
-        if(moveFactor > 1)
-            moveFactor = 0;
-
-        float view_pos[]= {viewPosition.x, viewPosition.y, viewPosition.z};
-
-        Water::waterShader.bind();
-        Water::waterShader.addUniformMat4f("u_model", model);
-        Water::waterShader.addUniformMat4f("u_view", view);
-        Water::waterShader.addUniformMat4f("u_projection", projection);
-        Water::waterShader.addUniform1f("u_moveFactor", moveFactor);
-        Water::waterShader.addUniform3f("u_viewPos", view_pos);
-
-        reflectionTexture.bind(0);
-        refractionTexture.bind(1);
-        dudv.bind(2);
-        normal.bind(3);
-        depth.bind(4);
+        shader.bind();
+        for(unsigned int i=0; i<textures.size(); i++){
+            textures[i].bind(i);
+        }
         va.bind();
-        ib.bind();
-        GLCall(glDrawElements(GL_TRIANGLES, ib.getCount(), GL_UNSIGNED_INT, NULL));
-        Window::disableBlending();
+        GLCall(glDrawArrays(GL_QUADS, 0, 4*gui_sizes.size()));
     }
 
     void cleanUP(){
-        reflectionTexture.deleteTexture();
-        refractionTexture.deleteTexture();
-        reflectionFrame.deleteBuffer();
-        refractionFrame.deleteBuffer();
         va.deleteVertexArray();
         vb.deleteVertexBuffer();
-        ib.deleteIndexBuffer();
+        for(unsigned int i=0; i<textures.size(); i++){
+            textures[i].deleteTexture();
+        }
+        textures.clear();
+        shader.deleteShader();
     }
+};
 
-    static void deleteShader(){
-        Water::waterShader.deleteShader();
-    }
-
-
+struct PosUV{
+    glm::vec3 position;
+    glm::vec2 uv;
 };
 
 class Billboard{
@@ -3564,373 +2753,6 @@ public:
     }
 };
 
-struct ParticleData{
-    glm::vec3 position;
-    glm::vec2 uv;
-};
-
-struct Particle{
-    glm::vec3 position;
-    glm::vec3 velocity;
-    float elapsedTime;
-    static glm::vec2 size;
-    static float lifeTime;
-
-    Particle():elapsedTime(0){}
-
-    /**
-    *Updates particles and returns true if particle is still alive
-    */
-    bool update(float gravity, int fps){
-        velocity.y -= gravity/(float)fps;
-        position = position + (1/(float)fps)*velocity;
-        elapsedTime += 1/(float)fps;
-        return elapsedTime<lifeTime;
-    }
-
-    /**
-    *Takes the view matrix and returns the
-    */
-    std::vector<ParticleData> calculateVertices(glm::mat4 view, int grid_x, int grid_y){
-        glm::vec3 cameraRight = glm::vec3(view[0][0], view[1][0], view[2][0]);
-        glm::vec3 cameraUp = glm::vec3(view[0][1], view[1][1], view[2][1]);
-        std::vector<ParticleData> vertices;
-
-        int totalGrid = grid_x*grid_y;
-        float pos_x = elapsedTime*totalGrid/lifeTime;
-        int pos_y = grid_y-1;
-        while(pos_x >= grid_x){
-            pos_x -= grid_x;
-            pos_y --;
-        }
-        pos_x =  int(pos_x);
-
-        const float squareVertices[] = {
-             -0.5f, -0.5f,
-              0.5f, -0.5f,
-              0.5f,  0.5f,
-             -0.5f,  0.5f
-         };
-         vertices.push_back({position+cameraRight*squareVertices[0]*size.x +cameraUp*squareVertices[1]*size.y, glm::vec2(   (float)pos_x/grid_x,       (float)pos_y/grid_y)});
-         vertices.push_back({position+cameraRight*squareVertices[2]*size.x +cameraUp*squareVertices[3]*size.y, glm::vec2(   (float)(pos_x+1)/grid_x,   (float)pos_y/grid_y)});
-         vertices.push_back({position+cameraRight*squareVertices[4]*size.x +cameraUp*squareVertices[5]*size.y, glm::vec2(   (float)(pos_x+1)/grid_x,   (float)(pos_y+1)/grid_y)});
-         vertices.push_back({position+cameraRight*squareVertices[6]*size.x +cameraUp*squareVertices[7]*size.y, glm::vec2(   (float)pos_x/grid_x,       (float)(pos_y+1)/grid_y)});
-         return vertices;
-    }
-};
-
-class ParticlesSystem{
-private:
-    OpenGL::VertexArray va;
-    OpenGL::VertexBuffer vb;
-    OpenGL::IndexBuffer ib;
-    unsigned int indices_num;
-    glm::vec3 emitter_position;
-    std::vector<Particle> particles;
-    float vertical_angle;
-    float emission_radius;
-    float velocity_magnetude;
-    int gridSizeX,gridSizeY;
-    static OpenGL::Shader shader;
-    OpenGL::Texture texture;
-
-    /**
-    *After all particles are pushed, it calculate the respective indices for vertex buffer
-    */
-    void calculateIndices(){
-        std::vector<unsigned int> indices;
-        for(unsigned int i=0; i<particles.size(); i++){
-            indices.push_back(4*i+0);
-            indices.push_back(4*i+1);
-            indices.push_back(4*i+2);
-            indices.push_back(4*i+2);
-            indices.push_back(4*i+3);
-            indices.push_back(4*i+0);
-        }
-        ib.loadData(&indices[0], indices.size());
-        indices.clear();
-    }
-
-    /**
-    *Loads the data to vertex buffer using each particles data
-    */
-    void loadVertices(glm::mat4 view){
-        std::vector<ParticleData> vertices;
-        std::vector<ParticleData> temp_vertices;
-        for(unsigned int i=0;i<particles.size(); i++){
-            temp_vertices = particles[i].calculateVertices(view, gridSizeX, gridSizeY);
-            for(int j=0; j<4; j++){
-                vertices.push_back(temp_vertices[j]);
-            }
-            temp_vertices.clear();
-        }
-        vb.feedDatatoAllocated(&vertices[0], vertices.size()*sizeof(ParticleData));
-        vertices.clear();
-    }
-
-    void initiateVertices(glm::vec2 size, float lifeTime,
-                          unsigned int num_particles, float velocity){
-        srand(time(NULL));
-        Particle::size = size;
-        Particle::lifeTime = lifeTime;
-        velocity_magnetude = velocity;
-        for(unsigned int i=0; i<num_particles; i++){
-            float horizontal_angle = rand()%360;
-            float t_vertical_angle = rand()%(int)vertical_angle;
-            glm::vec3 vec_velocity = glm::vec3(
-                                     sin(glm::radians(t_vertical_angle))*cos(glm::radians(horizontal_angle)),
-                                     cos(glm::radians(t_vertical_angle)),
-                                     sin(glm::radians(t_vertical_angle))*sin(glm::radians(horizontal_angle))
-                                     );
-
-            glm::vec3 del_pos = glm::vec3(emission_radius*cos(glm::radians(horizontal_angle)), 0,
-                                    emission_radius*sin(glm::radians(horizontal_angle)));
-            Particle particle;
-            particle.position = emitter_position + del_pos;
-            particle.velocity = velocity_magnetude * vec_velocity;
-            particle.elapsedTime = i*lifeTime/num_particles;
-            particles.push_back(particle);
-        }
-    }
-
-    /**
-    *Resets the position of particle but position relative to emitter position
-    */
-    void respawnParticle(int index){
-        float horizontal_angle = rand()%360;
-        float t_vertical_angle = rand()%(int)vertical_angle;
-        glm::vec3 vec_velocity = glm::vec3(
-                                 sin(glm::radians(t_vertical_angle))*cos(glm::radians(horizontal_angle)),
-                                 cos(glm::radians(t_vertical_angle)),
-                                 sin(glm::radians(t_vertical_angle))*sin(glm::radians(horizontal_angle))
-                                 );
-        glm::vec3 del_pos = glm::vec3(emission_radius*cos(glm::radians(horizontal_angle)), 0,
-                                      emission_radius*sin(glm::radians(horizontal_angle)));
-        particles[index].elapsedTime = 0;
-        particles[index].position = emitter_position+del_pos;
-        particles[index].velocity = velocity_magnetude * vec_velocity;
-    }
-
-    /**
-    *After all particles are installed, it loads that datas to buffer
-    */
-    void loadToBuffer(){
-        vb.allocateDynamically(particles.size()*4*sizeof(ParticleData));
-        va.generateVertexArray();
-        OpenGL::VertexBufferLayout vbl;
-        vbl.pushFloat(3);
-        vbl.pushFloat(2);
-        va.addBuffer(vb, vbl);
-        calculateIndices();
-    }
-
-public:
-    /**
-    *loads texture texture atlases to the particle
-    *Atlases should be of square grid
-    */
-    void loadTexture(std::string textureLocation, int XgridSize, int YgridSize){
-        gridSizeX = XgridSize;
-        gridSizeY = YgridSize;
-        texture.loadTexture(textureLocation);
-    }
-
-    /**
-    *Sets the position of emitter, all particles will be spawn from relative to this position
-    */
-    void setParticles(glm::vec3 emitter_position = glm::vec3(0,0,0), float emission_radius = 0.5,unsigned int num_particles = 30, float velocity = 0.5,
-                        float vertical_angle = 15,glm::vec2 size = glm::vec2(0.1, 0.1), float lifeTime = 2.0){
-        this->emitter_position = emitter_position;
-        this->emission_radius = emission_radius;
-        this->vertical_angle = vertical_angle>0?vertical_angle:1;
-        initiateVertices(size, lifeTime, num_particles, velocity);
-        loadToBuffer();
-    }
-
-    /**
-    *Sets the current emitter location
-    */
-    void setEmitterLocation(glm::vec3 position){
-        this->emitter_position = position;
-    }
-
-    /**
-    *Specifies the shader file to all particles system
-    */
-    static void specifyShader(std::string shaderLocation){
-        shader.loadShader(shaderLocation);
-        shader.bind();
-        shader.addUniform1i("u_slot", 0);
-    }
-
-    /**
-    *Updates each particle and clears if that particle is dead
-    */
-    void updateParticles(float gravity, int fps){
-        for(unsigned int i=0; i<particles.size(); i++){
-            bool alive = particles[i].update(gravity, fps);
-            if(!alive)
-                respawnParticle(i);
-        }
-    }
-
-    /**
-    *Renders the particles depending upon view and projection
-    *If depthMask is disabled, then render the particle at last
-    *Additive blending may distort the texture
-    */
-    void draw(glm::mat4 view, glm::mat4 projection, bool disableDepthMask = false, bool enableAdditiveBlending = false){
-        if(disableDepthMask)        {GLCall(glDepthMask(GL_FALSE));}
-        if(enableAdditiveBlending)  {GLCall(Window::enableAdditiveBlending());}
-        else                        {GLCall(Window::enableAlphaBlending());}
-
-        shader.bind();
-        shader.addUniformMat4f("u_view", view);
-        shader.addUniformMat4f("u_projection", projection);
-        loadVertices(view);
-        ib.bind();
-        va.bind();
-        texture.bind();
-        GLCall(glDrawElements(GL_TRIANGLES, ib.getCount() , GL_UNSIGNED_INT, NULL));
-
-        if(disableDepthMask){GLCall(glDepthMask(GL_TRUE));}
-        GLCall(Window::disableBlending());
-    }
-
-    /**
-    *Clears the buffers and shader
-    */
-    void cleanUP(){
-        va.deleteVertexArray();
-        vb.deleteVertexBuffer();
-        ib.deleteIndexBuffer();
-        texture.deleteTexture();
-        particles.clear();
-    }
-
-    /**
-    *Deletes the static shader member
-    */
-    static void deleteShader(){
-        shader.deleteShader();
-    }
-};
-
-struct CameraData{
-    glm::mat4 projection;
-    glm::mat4 view;
-};
-
-/**
-*Logic:
-*       -Render the scene from sun's perspective
-*       -Store that value in depth texture
-*       -Use that depth value in comparing depth with that fragment
-*       -Use poisson disk distribution to adjust visibility with dark
-*/
-class ShadowLoader{
-private:
-    OpenGL::FrameBuffer fb;
-    OpenGL::Texture depthTexture;
-    int width, height;
-
-    glm::vec3 lightDirection;
-    glm::vec3 lightPosition;
-    glm::mat4 projection;
-    glm::mat4 view;
-
-    /**
-    *Calculates 8 positions of perspective position
-    */
-    std::vector<glm::vec3> calculateVertices(float cam_near, float cam_far, float cam_fov, float ar,
-                                             glm::vec3 camPosition, glm::vec3 direction){
-        std::vector<glm::vec3> vertices;
-        float nearHeight = cam_near*tan(glm::radians(cam_fov/2));
-        float nearWidth = nearHeight*ar;
-        float farHeight = cam_far*tan(glm::radians(cam_fov/2));
-        float farWidth = farHeight*ar;
-
-        direction = glm::normalize(-direction);
-        glm::vec3 right = glm::normalize(glm::cross(glm::vec3(0, 1, 0), direction));
-        glm::vec3 up = glm::normalize(glm::cross(direction, right));
-        glm::vec3 nearCentre = camPosition + cam_near*direction;
-        glm::vec3 farCentre = camPosition + cam_far*direction;
-
-        vertices.push_back(nearCentre + nearHeight*up + nearWidth*right);//near top right
-        vertices.push_back(nearCentre + nearHeight*up - nearWidth*right);//near top left
-        vertices.push_back(nearCentre - nearHeight*up + nearWidth*right);//near button right
-        vertices.push_back(nearCentre - nearHeight*up - nearWidth*right);//near button left
-        vertices.push_back(farCentre + farHeight*up + farWidth*right);   //far top right
-        vertices.push_back(farCentre + farHeight*up - farWidth*right);   //far top left
-        vertices.push_back(farCentre - farHeight*up + farWidth*right);   //far bottom right
-        vertices.push_back(farCentre - farHeight*up - farWidth*right);   //far button left
-        return vertices;
-    }
-
-public:
-    /**
-    *@param width and height is resolution of depth texture in pixels
-    *@param light direction is direction of light from where shadow to be mapped
-    */
-    void loadData(int width, int height, int screenWidth, int screenHeight, glm::vec3 lightDirection){
-        this->width = width;
-        this->height = height;
-        this->lightDirection = glm::normalize(lightDirection);
-        fb.generateFrameBuffer(false);
-        fb.bind(width, height);
-        fb.AttachColorTexture(width, height);
-        depthTexture.loadCreatedTexture(fb.AttachDepthTexture(width, height));
-        fb.unbind(screenWidth, screenHeight);
-    }
-
-    /**
-    *All drawing after sampling will have shadow
-    */
-    void startSampling(){
-        fb.bind(width, height);
-    }
-
-    /**
-    *Stops shadow sampling and draws in the screen
-    */
-    void stopSampling(int screenWidth, int screenHeight){
-        fb.unbind(screenWidth, screenHeight);
-    }
-
-    /**
-    *@param camera and other data from where screen data is rendered
-    *@return the camera data from where objects to be rendered for shadow depth sampling
-    *These data should be used while rendering while sampling the depth value
-    */
-    CameraData getCameraData(Camera camera, float cam_fov, float cam_near, float cam_far, float ar, float lightDistance,float proj_offset = 1.0){
-        std::vector<glm::vec3> vertices;
-        vertices = calculateVertices(cam_near, cam_far, cam_fov, ar, camera.getPosition(), camera.getDirection());
-        glm::vec3 diagonal = vertices[0]-vertices[7];
-        diagonal.y = 0;
-        float distance = proj_offset+glm::length(diagonal);
-        glm::vec3 sumPoint = glm::vec3(0.0);
-        for(unsigned int i=0; i<vertices.size(); i++)
-            sumPoint += vertices[i];
-        sumPoint /= vertices.size();
-        lightPosition = sumPoint - lightDirection;
-        glm::mat4 projection = glm::ortho(-distance/2,distance/2,-distance/2,distance/2,-lightDistance/2,lightDistance/2);
-        glm::mat4 view = glm::lookAt(lightPosition, sumPoint, glm::vec3(0, 1, 0));
-        return {projection, view};
-    }
-
-    /**
-    *Binds the depth texture at provided index
-    */
-    void bindDepthTexture(unsigned int i){
-        depthTexture.bind(i);
-    }
-
-    void cleanUP(){
-        fb.deleteBuffer();
-        depthTexture.deleteTexture();
-    }
-};
-
 class Renderer{
 
 public:
@@ -3951,14 +2773,8 @@ public:
         shader.bind();
         va.bind();
         ib.bind();
-        GLCall(glDrawElements(GL_TRIANGLES, ib.getCount(), GL_UNSIGNED_INT, NULL))    ;
+        GLCall(glDrawElements(GL_TRIANGLES, ib.getCount(), GL_UNSIGNED_INT, NULL));
     }
-
-    /*void draw(Mesh& mesh, OpenGL::Shader& shader){
-        shader.bind();
-        mesh.bindBuffers();
-        GLCall(glDrawElements(GL_TRIANGLES, mesh.getIndicesCount(), GL_UNSIGNED_INT, NULL));
-    }*/
 
     /**
     *@param obj is object file to be rendered
@@ -3971,93 +2787,610 @@ public:
     }
 };
 
-class MousePicker{
-private:
-    glm::vec3 currentRay;
-    glm::mat4 view;
-    glm::mat4 projection;
+/**
+*Useful tools but not gonna be rendered or anything
+*/
+namespace Tools{
+    class Camera{
+    private:
+        glm::vec3 position;
+        glm::vec3 camDirection;
+        float yaw = 0.0;
+        float pitch = 0.0;
 
-    glm::vec2 getNormalizedSpace(float x, float y, float display_width, float display_height){
-        float norm_x = 2*x/display_width - 1.0;
-        float norm_y = 2*y/display_height - 1.0;
-        norm_y *= -1; //flipping y co-ordinate because co-ordinate starts from top left corner
-        return glm::vec2(norm_x, norm_y);
-    }
+        float old_yaw;
+        float old_pitch;
 
-    glm::vec4 clipToEyeSpace(glm::vec4 clipSpace){
-        glm::mat4 projection_inverse = glm::inverse(projection);
-        glm::vec4 eyeCords = projection_inverse * clipSpace;
-        return glm::vec4(eyeCords.x, eyeCords.y, -1.0f, 0.0f);
-    }
+        float dot_product;
+        const float sensitivity = 0.125f;
+        const float MAX_DISTANCE = 4.0f;
+        const float MIN_DISTANCE = 0.0f;
+        float distance = MAX_DISTANCE;
 
-    glm::vec3 eyeToWorld(glm::vec4 eyeSpace){
-        glm::mat4 view_inverse = glm::inverse(view);
-        glm::vec4 worldCords = view_inverse * eyeSpace;
-        glm::vec3 result = glm::vec3(worldCords.x, worldCords.y, worldCords.z);
-        result = glm::normalize(result);
-        return result;
-    }
-public:
-    void setMatrices(glm::mat4 view, glm::mat4 projection){
-        this->view = view;
-        this->projection = projection;
-    }
+        void limitAngleToPositive(float& angle){
+            if(angle>360)
+                angle -= 360;
+            if(angle<0)
+                angle +=360;
+        }
 
-    glm::vec3 getRay(){
-        return currentRay;
-    }
+        void recalculateDistance(){
+            if(pitch >=0)
+                distance = MAX_DISTANCE;
+            else{
+                float slope = (MAX_DISTANCE - MIN_DISTANCE)/89.0;
+                distance = slope * pitch + MAX_DISTANCE;
+            }
+        }
+
+    public:
+        void setFov(float angle){
+            dot_product = cos(glm::radians(angle));
+        }
+
+        void setYaw(float yaw){
+            this->yaw = yaw;
+        }
+
+        void setPitch(float pitch){
+            this->pitch = pitch;
+        }
+
+        void increaseYaw(float delta = 1){
+            yaw += sensitivity*delta;
+            limitAngleToPositive(yaw);
+        }
+
+        void increasePitch(float delta = 1){
+            pitch += sensitivity*delta;
+            if(pitch > 75)
+                pitch = 75;
+            else if(pitch < -80)
+                pitch = -80;
+
+            recalculateDistance();
+        }
+
+        void setPosition(glm::vec3 pos){
+            position = pos;
+        }
+
+        void setDirection(glm::vec3 dir){
+            camDirection = dir;
+        }
+
+        glm::vec3 getPosition(){
+            return position;
+        }
+
+        glm::vec3 getDirection(){
+            return camDirection;
+        }
+
+        void follow(Spaceship ship){
+            float horizontal = cos(glm::radians(pitch));
+            float vertical = sin(glm::radians(pitch));
+            float x_offset = horizontal*sin(glm::radians(yaw));
+            float z_offset = horizontal*cos(glm::radians(yaw));
+
+            position = ship.getPosition();
+            camDirection = glm::vec3(x_offset, vertical, z_offset);
+            camDirection = glm::normalize(camDirection);
+
+            if(glm::dot(camDirection, -ship.getDirection())<dot_product){
+                pitch = old_pitch;
+                float horizontal = cos(glm::radians(pitch));
+                float vertical = sin(glm::radians(pitch));
+                float x_offset = horizontal*sin(glm::radians(yaw));
+                float z_offset = horizontal*cos(glm::radians(yaw));
+
+                position = ship.getPosition();
+                camDirection = glm::vec3(x_offset, vertical, z_offset);
+                camDirection = glm::normalize(camDirection);
+            }
+            if(glm::dot(camDirection, -ship.getDirection())<dot_product){
+                yaw = old_yaw;
+                float horizontal = cos(glm::radians(pitch));
+                float vertical = sin(glm::radians(pitch));
+                float x_offset = horizontal*sin(glm::radians(yaw));
+                float z_offset = horizontal*cos(glm::radians(yaw));
+
+                position = ship.getPosition();
+                camDirection = glm::vec3(x_offset, vertical, z_offset);
+                camDirection = glm::normalize(camDirection);
+            }
+
+            old_yaw = yaw;
+            old_pitch = pitch;
+        }
+
+        glm::mat4 getViewMatrix(glm::vec3 upVector = glm::vec3(0.0, 1.0, 0.0)){
+            glm::vec3 camRight = glm::normalize(glm::cross(upVector, camDirection));
+            glm::vec3 camUp = glm::cross(camDirection, camRight);
+            glm::mat4 first = glm::transpose(glm::mat4( glm::vec4(camRight, 0.0),
+                                                        glm::vec4(camUp, 0.0),
+                                                        glm::vec4(camDirection, 0.0),
+                                                        glm::vec4(glm::vec3(0.0), 1.0)));
+            glm::mat4 second = glm::mat4(1.0);
+            second[3] = glm::vec4(-position, 1.0);
+
+            /*
+            view  = |  Rx Ry  Rz  0.0 |   | 1.0 0.0 0.0 -Px |
+                    |  Ux Uy  Uz  0.0 | * | 0.0 1.0 0.0 -Py |
+                    |  Dx Dy  Dz  0.0 |   | 0.0 0.0 1.0 -Pz |
+                    |  0  0   0   1.0 |   | 0.0 0.0 0.0 1.0 |
+            */
+            return first*second;
+        }
+
+        void invertPitch(){
+            pitch *= -1;
+        }
+
+    };
+
+    struct CameraData{
+        glm::mat4 projection;
+        glm::mat4 view;
+    };
 
     /**
-    *Using normalized space
+    *Logic:
+    *       -Render the scene from sun's perspective
+    *       -Store that value in depth texture
+    *       -Use that depth value in comparing depth with that fragment
+    *       -Use poisson disk distribution to adjust visibility with dark
     */
-    glm::vec3 calculateRay(float x,float y){
-        glm::vec4 clipCords = glm::vec4( x, y, -1.0f, 1.0f);
-        glm::vec4 eyeSpace = clipToEyeSpace(clipCords);
-        glm::vec3 worldSpace = eyeToWorld(eyeSpace);
-        return worldSpace;
-    }
+    class ShadowLoader{
+    private:
+        OpenGL::FrameBuffer fb;
+        OpenGL::Texture depthTexture;
+        int width, height;
+
+        glm::vec3 lightDirection;
+        glm::vec3 lightPosition;
+        glm::mat4 projection;
+        glm::mat4 view;
+
+        /**
+        *Calculates 8 positions of perspective position
+        */
+        std::vector<glm::vec3> calculateVertices(float cam_near, float cam_far, float cam_fov, float ar,
+                                                 glm::vec3 camPosition, glm::vec3 direction){
+            std::vector<glm::vec3> vertices;
+            float nearHeight = cam_near*tan(glm::radians(cam_fov/2));
+            float nearWidth = nearHeight*ar;
+            float farHeight = cam_far*tan(glm::radians(cam_fov/2));
+            float farWidth = farHeight*ar;
+
+            direction = glm::normalize(-direction);
+            glm::vec3 right = glm::normalize(glm::cross(glm::vec3(0, 1, 0), direction));
+            glm::vec3 up = glm::normalize(glm::cross(direction, right));
+            glm::vec3 nearCentre = camPosition + cam_near*direction;
+            glm::vec3 farCentre = camPosition + cam_far*direction;
+
+            vertices.push_back(nearCentre + nearHeight*up + nearWidth*right);//near top right
+            vertices.push_back(nearCentre + nearHeight*up - nearWidth*right);//near top left
+            vertices.push_back(nearCentre - nearHeight*up + nearWidth*right);//near button right
+            vertices.push_back(nearCentre - nearHeight*up - nearWidth*right);//near button left
+            vertices.push_back(farCentre + farHeight*up + farWidth*right);   //far top right
+            vertices.push_back(farCentre + farHeight*up - farWidth*right);   //far top left
+            vertices.push_back(farCentre - farHeight*up + farWidth*right);   //far bottom right
+            vertices.push_back(farCentre - farHeight*up - farWidth*right);   //far button left
+            return vertices;
+        }
+
+    public:
+        /**
+        *@param width and height is resolution of depth texture in pixels
+        *@param light direction is direction of light from where shadow to be mapped
+        */
+        void loadData(int width, int height, int screenWidth, int screenHeight, glm::vec3 lightDirection){
+            this->width = width;
+            this->height = height;
+            this->lightDirection = glm::normalize(lightDirection);
+            fb.generateFrameBuffer(false);
+            fb.bind(width, height);
+            fb.AttachColorTexture(width, height);
+            depthTexture.loadCreatedTexture(fb.AttachDepthTexture(width, height));
+            fb.unbind(screenWidth, screenHeight);
+        }
+
+        /**
+        *All drawing after sampling will have shadow
+        */
+        void startSampling(){
+            fb.bind(width, height);
+        }
+
+        /**
+        *Stops shadow sampling and draws in the screen
+        */
+        void stopSampling(int screenWidth, int screenHeight){
+            fb.unbind(screenWidth, screenHeight);
+        }
+
+        /**
+        *@param camera and other data from where screen data is rendered
+        *@return the camera data from where objects to be rendered for shadow depth sampling
+        *These data should be used while rendering while sampling the depth value
+        */
+        CameraData getCameraData(Camera camera, float cam_fov, float cam_near, float cam_far, float ar, float lightDistance,float proj_offset = 1.0){
+            std::vector<glm::vec3> vertices;
+            vertices = calculateVertices(cam_near, cam_far, cam_fov, ar, camera.getPosition(), camera.getDirection());
+            glm::vec3 diagonal = vertices[0]-vertices[7];
+            diagonal.y = 0;
+            float distance = proj_offset+glm::length(diagonal);
+            glm::vec3 sumPoint = glm::vec3(0.0);
+            for(unsigned int i=0; i<vertices.size(); i++)
+                sumPoint += vertices[i];
+            sumPoint /= vertices.size();
+            lightPosition = sumPoint - lightDirection;
+            glm::mat4 projection = glm::ortho(-distance/2,distance/2,-distance/2,distance/2,-lightDistance/2,lightDistance/2);
+            glm::mat4 view = glm::lookAt(lightPosition, sumPoint, glm::vec3(0, 1, 0));
+            return {projection, view};
+        }
+
+        /**
+        *Binds the depth texture at provided index
+        */
+        void bindDepthTexture(unsigned int i){
+            depthTexture.bind(i);
+        }
+
+        void cleanUP(){
+            fb.deleteBuffer();
+            depthTexture.deleteTexture();
+        }
+    };
+
+    class MousePicker{
+    private:
+        glm::vec3 currentRay;
+        glm::mat4 view;
+        glm::mat4 projection;
+
+        glm::vec2 getNormalizedSpace(float x, float y, float display_width, float display_height){
+            float norm_x = 2*x/display_width - 1.0;
+            float norm_y = 2*y/display_height - 1.0;
+            norm_y *= -1; //flipping y co-ordinate because co-ordinate starts from top left corner
+            return glm::vec2(norm_x, norm_y);
+        }
+
+        glm::vec4 clipToEyeSpace(glm::vec4 clipSpace){
+            glm::mat4 projection_inverse = glm::inverse(projection);
+            glm::vec4 eyeCords = projection_inverse * clipSpace;
+            return glm::vec4(eyeCords.x, eyeCords.y, -1.0f, 0.0f);
+        }
+
+        glm::vec3 eyeToWorld(glm::vec4 eyeSpace){
+            glm::mat4 view_inverse = glm::inverse(view);
+            glm::vec4 worldCords = view_inverse * eyeSpace;
+            glm::vec3 result = glm::vec3(worldCords.x, worldCords.y, worldCords.z);
+            result = glm::normalize(result);
+            return result;
+        }
+    public:
+        void setMatrices(glm::mat4 view, glm::mat4 projection){
+            this->view = view;
+            this->projection = projection;
+        }
+
+        glm::vec3 getRay(){
+            return currentRay;
+        }
+
+        /**
+        *Using normalized space
+        */
+        glm::vec3 calculateRay(float x,float y){
+            glm::vec4 clipCords = glm::vec4( x, y, -1.0f, 1.0f);
+            glm::vec4 eyeSpace = clipToEyeSpace(clipCords);
+            glm::vec3 worldSpace = eyeToWorld(eyeSpace);
+            return worldSpace;
+        }
+
+        /**
+        *Using screen co-ordinate space
+        */
+        glm::vec3 calculateRay(float x,float y, float width, float height)
+        {
+            glm::vec2 normalized = getNormalizedSpace(x, y, width, height);
+            return calculateRay(normalized.x, normalized.y);
+        }
+
+    };
+
+    class FPSManager{
+    private:
+        int targetFPS;
+        int countedFPS;
+        double initial_time;
+        double final_time;
+    public:
+        FPSManager(int targetFPS){
+            this->targetFPS = targetFPS;
+            this->countedFPS = targetFPS;
+        }
+
+        /**
+        *Sets the FPS to be limited
+        */
+        void setTargetFPS(int targetFPS){
+            this->targetFPS = targetFPS;
+            this->countedFPS = targetFPS;
+        }
+
+        /**
+        *Updates the counting of fps and can display too
+        */
+        void updateCounter(bool displayFPS=false){
+            static int frameCount = 0;
+            static double lastCountTime = glutGet(GLUT_ELAPSED_TIME);
+            float timefromLastCount = glutGet(GLUT_ELAPSED_TIME)-lastCountTime;
+            //If more than one second is elapsed
+            if( timefromLastCount >= 1000.0){
+                countedFPS = frameCount;
+                //Resets frame counter and sets time reference for time count
+                frameCount = 0;
+                lastCountTime = glutGet(GLUT_ELAPSED_TIME);
+
+                if(displayFPS){
+                    std::cout<<"Counted FPS = "<<countedFPS<<std::endl;
+                }
+            }
+            frameCount++;
+        }
+
+        /**
+        *Initiate at the starting of display
+        *Necessary to limit FPS
+        */
+        void initiateTimer(){
+            initial_time = glutGet(GLUT_ELAPSED_TIME);
+        }
+
+        /**
+        *Timer should have been initiated for this to work
+        */
+        void limitFPS(bool useCountedFPS=true, bool showWarning=true){
+            //Limiting FPS
+    //        float targetTime = 1000.0/float(targetFPS);
+    //        int frame_lag_in_second = targetFPS - countedFPS;
+    //        float time_per_frame = 2000.0/float(targetFPS+countedFPS);
+    //        float frame_lag_per_frame = frame_lag_in_second*time_per_frame/1000.0;
+    //        float time_lag_per_frame = useCountedFPS?(frame_lag_per_frame*time_per_frame):0;
+
+            float offset = 0.95;
+            float targetTime = 1000.0/float(targetFPS);
+            int frame_lag_in_second = targetFPS - countedFPS;
+            float time_lag_per_frame = useCountedFPS?(offset+2.0*float(frame_lag_in_second)/float(targetFPS+countedFPS)):0;
+
+            final_time = glutGet(GLUT_ELAPSED_TIME);
+            double delay_time =  targetTime - (final_time-initial_time) - time_lag_per_frame;
+            if(delay_time > 0)   Sleep(delay_time);
+            else if(showWarning) std::cout<<"Warning: FPS lagging this frame!!!"<<std::endl;
+        }
+
+        /**
+        *Returns the counted FPS
+        */
+        int getCountedFPS(){
+            return countedFPS;
+        }
+    };
 
     /**
-    *Using screen co-ordinate space
+    *For post process if input is from single texture
     */
-    glm::vec3 calculateRay(float x,float y, float width, float height)
-    {
-        glm::vec2 normalized = getNormalizedSpace(x, y, width, height);
-        return calculateRay(normalized.x, normalized.y);
-    }
+    class PostProcess{
+    protected:
+        OpenGL::FrameBuffer fb;
+        OpenGL::Texture colorTexture;
+        OpenGL::Shader shader;
+        OpenGL::VertexArray va;
+        OpenGL::VertexBuffer vb;
+        int width, height;
 
-};
+    public:
+        /**
+        *@param width and height is resolution of depth texture in pixels
+        *@param light direction is direction of light from where shadow to be mapped
+        */
+        void loadData(int width, int height, int screenWidth, int screenHeight, std::string shaderLocation, bool useDepthAttachment = true){
+            this->width = width;
+            this->height = height;
+            fb.generateFrameBuffer();
+            fb.bind(width, height);
+            fb.AttachColorTexture(width, height);
+            colorTexture.loadCreatedTexture(fb.AttachColorTexture(width, height));
+            if(useDepthAttachment){ fb.AttachDepthTexture(width, height);}
+            fb.unbind(screenWidth, screenHeight);
+            shader.loadShader(shaderLocation);
+            shader.bind();
+            shader.addUniform1i("u_width", width);
+            shader.addUniform1i("u_height", height);
 
-class Mesh {
-private:
-    OpenGL::VertexArray va;
-    OpenGL::VertexBuffer vb;
-    OpenGL::IndexBuffer ib;
+            //Creating the triangle covering full screen
+            std::vector<glm::vec2> vertices;
+            vertices.push_back(glm::vec2(-1.0, -1.0));
+            vertices.push_back(glm::vec2( 1.0, -1.0));
+            vertices.push_back(glm::vec2( 1.0,  1.0));
+            vertices.push_back(glm::vec2(-1.0,  1.0));
 
-public:
-    void loadMesh(std::vector<SimpleVertex> vertices, std::vector<unsigned int> indices/*, std::vector<s_Texture> textures*/){
-        va.generateVertexArray();
-        vb.loadData(&vertices[0], vertices.size()*sizeof(SimpleVertex));
-        ib.loadData(&indices[0], indices.size());
-        OpenGL::VertexBufferLayout vbl;
-        vbl.pushFloat(3);
-        vbl.pushFloat(3);
-        vbl.pushFloat(2);
-        va.addBuffer(vb, vbl);
-    }
+            //Adding the data to buffer
+            vb.loadData(&vertices[0], 2*sizeof(float)*vertices.size());
+            va.generateVertexArray();
+            OpenGL::VertexBufferLayout vbl;
+            vbl.pushFloat(2);
+            va.addBuffer(vb, vbl);
+        }
 
-    void bindBuffers(){
-        va.bind();
-        ib.bind();
-    }
+        /**
+        *All drawing after sampling will have shadow
+        */
+        void startSampling(){
+            fb.bind(width, height);
+        }
 
-    unsigned int getIndicesCount(){
-        return ib.getCount();
-    }
+        /**
+        *Stops shadow sampling and draws in the screen
+        */
+        void stopSampling(int screenWidth, int screenHeight){
+            fb.unbind(screenWidth, screenHeight);
+        }
 
-    void deleteBuffers(){
-        va.deleteVertexArray();
-        vb.deleteVertexBuffer();
-        ib.deleteIndexBuffer();
-    }
+        /**
+        *Bind other texture before using other
+        */
+        void drawProcessed(){
+            shader.bind();
+            shader.addUniform1i("u_slot", 0);
+            colorTexture.bind();
+            va.bind();
+            GLCall(glDrawArrays(GL_QUADS, 0, 4));
+        }
+
+        void bindColorTexture(unsigned int slot){
+            colorTexture.bind(slot);
+        }
+
+        void addUniform1fToShader(std::string name, float value){
+            shader.bind();
+            shader.addUniform1f(name, value);
+        }
+
+        void cleanUp(){
+            fb.deleteBuffer();
+            vb.deleteVertexBuffer();
+            va.deleteVertexArray();
+            colorTexture.deleteTexture();
+        }
+    };
+
+    class DoubleSlotPostProcess:public PostProcess{
+    public:
+        void drawProcessed(){
+            shader.bind();
+            shader.addUniform1i("u_slot0", 0);
+            shader.addUniform1i("u_slot1", 1);
+            colorTexture.bind();
+            va.bind();
+            GLCall(glDrawArrays(GL_QUADS, 0, 4));
+        }
+    };
+
+    /**
+    *If you want to use multiple post processing
+    *You can use post processor to process all sequence by sequence
+    */
+    class PostProcessor{
+    private:
+        std::vector<PostProcess> postProcesses;
+        Renderer renderer;
+    public:
+        void setPostprocessing(std::vector<std::string> processingshaders, int width, int height, int screenWidth, int screenHeight){
+            for(unsigned int i=0; i<processingshaders.size(); i++){
+                bool attachDepth = (i==0)?true:false;
+                PostProcess process;
+                process.loadData(width, height, screenWidth, screenHeight, processingshaders[i], attachDepth);
+                postProcesses.push_back(process);
+            }
+        }
+
+        void startPostProcessing(){
+            postProcesses[0].startSampling();
+            renderer.clear();
+        }
+
+        void stopPostProcessing(int screenWidth, int screenHeight){
+            postProcesses[0].stopSampling(screenWidth, screenHeight);
+            for(unsigned int i=1; i<postProcesses.size(); i++){
+                renderer.clear();
+                postProcesses[i].startSampling();
+                    postProcesses[i-1].drawProcessed();
+                postProcesses[i].stopSampling(screenWidth, screenHeight);
+            }
+        }
+
+        void drawFinalProcessed(){
+            postProcesses[postProcesses.size()-1].drawProcessed();
+        }
+
+        unsigned int getNoOfProcesses(){
+            return postProcesses.size();
+        }
+
+        void bindColorTexture(int index, int slot){
+            postProcesses[index].bindColorTexture(slot);
+        }
+    };
+
+    class BloomPostProcessor{
+    private:
+        PostProcessor postProcessor;//Does series of post processing
+        DoubleSlotPostProcess bloomProcess;//Renders the scene for final
+        PostProcess normalProcess;//Renders the scene
+        Renderer renderer;
+        bool glowSpecified;
+
+    public:
+
+        /**
+        *Shader location order:  Dummy , brightFilter,Horizontal blur, Vertical blur, bloom
+        *
+        */
+        void load(int width, int height, int screenWidth, int screenHeight, std::vector<std::string> Shaderlocations, float brightness){
+            normalProcess.loadData(width, height, screenWidth, screenHeight, Shaderlocations[0]);
+            bloomProcess.loadData(width, height, screenWidth, screenHeight, Shaderlocations[Shaderlocations.size()-1]);
+            bloomProcess.addUniform1fToShader("u_brightness", brightness);
+
+            std::vector<std::string> processLocations;
+            for(unsigned int i=0 ; i<(Shaderlocations.size()-1); i++){
+                processLocations.push_back(Shaderlocations[i]);
+            }
+            postProcessor.setPostprocessing(processLocations, width/2, height/2, screenWidth, screenHeight);
+        }
+
+        void startSampling(bool specifyGlow = false){
+            glowSpecified = specifyGlow;
+            normalProcess.startSampling();
+            renderer.clear();
+        }
+
+        void stopSampling(int screenWidth, int screenHeight){
+            normalProcess.stopSampling(screenWidth, screenHeight);
+        }
+
+        void startGlowingSampling(){
+            glowSpecified = true;
+            postProcessor.startPostProcessing();
+            renderer.clear();
+        }
+
+        void stopGlowSampling(int screenWidth, int screenHeight){
+            postProcessor.stopPostProcessing(screenWidth, screenHeight);
+        }
+
+        void drawProcessed(int screenWidth, int screenHeight){
+            //First start post processing the rendered data
+            if(!glowSpecified){
+                postProcessor.startPostProcessing();
+                    renderer.clear();
+                    normalProcess.drawProcessed();
+                postProcessor.stopPostProcessing(screenWidth, screenHeight);
+            }
+            //Then render that processed data to slot0 of bloom processing
+            bloomProcess.startSampling();
+                renderer.clear();
+                postProcessor.drawFinalProcessed();
+            bloomProcess.stopSampling(screenWidth, screenHeight);
+
+            //Render the bloom result data specifying the normal texture too
+            normalProcess.bindColorTexture(1);
+            bloomProcess.drawProcessed();
+        }
+
+
+    };
 };

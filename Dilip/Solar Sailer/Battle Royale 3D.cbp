@@ -56,6 +56,7 @@
 		<Unit filename="bin/Debug/res/shaders/GUI.shader" />
 		<Unit filename="bin/Debug/res/shaders/NormalMapped.shader" />
 		<Unit filename="bin/Debug/res/shaders/Particles.shader" />
+		<Unit filename="bin/Debug/res/shaders/Postprocessing.shader" />
 		<Unit filename="bin/Debug/res/shaders/Skybox.shader" />
 		<Unit filename="bin/Debug/res/shaders/Terrain.shader" />
 		<Unit filename="bin/Debug/res/shaders/Water.shader" />
