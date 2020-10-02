@@ -32,137 +32,200 @@ const GLfloat mat_diffuse[]    = { 0.8f, 0.8f, 0.8f, 1.0f };
 const GLfloat mat_specular[]   = { 1.0f, 1.0f, 1.0f, 1.0f };
 const GLfloat high_shininess[] = { 100.0f };
 
+Matter Mercury;
+Matter Earth;
+Matter Mars;
+Matter Halley;
+Matter Venus;
+Matter Jupiter;
+Matter Saturn;
+Matter Uranus;
+Matter Neptune;
+Matter Pluto;
 Spacetime spacetime;
 int physicsMain(){
 
     Matter Sun;
     Sun.setMass(1.9e30);
-	Sun.setTemperature(5780);
-	Sun.setRadius(6.96340e8);
-	Sun.setBlackBody(true);
 
-    Matter Earth;
-    Earth.setMass(6e24);
-    Earth.setPosition(Vector3::getVector(149.598e9,0,0));
-    Earth.setVelocity(Vector3::getVector(0,0,1).scale(29.78e3));
-	Earth.setRadius(6.371e6);
-	Earth.setEmissivity(0.7);
+    Mercury.setMass(3.3011e23);
+    Mercury.setPosition(Vector3::getVector(46e9,0,0));
+    Mercury.setVelocity(Vector3::getVector(0,0,1).scale(57.59e3));
 
-    //Matter Moon;
-    //Moon.setMass(7.35e22);
-    //Moon.setPosition(Vector3::getVector(149.597e9,0,0));
-    //Moon.setVelocity(Vector3::getVector(0,0,1).scale(-1.022e3+24.077e3));
+	Venus.setMass(4.8675e24);
+	Venus.setPosition(Vector3::getVector(107.48e9, 0, 0));
+	Venus.setVelocity(Vector3::getVector(0, 0, 1).scale(34.3e3));
 
-    Matter Mars;
+    Earth.setMass(5.97237e24);
+    Earth.setPosition(Vector3::getVector(147.09e9,0,0));
+    Earth.setVelocity(Vector3::getVector(0,0,1).scale(29.5e3));
+
     Mars.setMass(6.4171e23);
-    Mars.setPosition(Vector3::getVector(227.939e9,0,0));
-    Mars.setVelocity(Vector3::getVector(0,0,1).scale(24.077e3));
-	Mars.setRadius(3.3895e6);
-	Mars.setEmissivity(0.9);
+    Mars.setPosition(Vector3::getVector(206.62e9,0,0));
+    Mars.setVelocity(Vector3::getVector(0,0,1).scale(25.80e3));
 
-	Matter Mercury;
-	Mercury.setMass(3.285e23);
-	Mercury.setPosition(Vector3::getVector(67.087e9, 0, 0));
-	Mercury.setVelocity(Vector3::getVector(0, 0, 1).scale(47.362e3));
-	Mercury.setRadius(2.437e6);
-	Mercury.setEmissivity(0.932);
+	Jupiter.setMass(1898.19e24);
+	Jupiter.setPosition(Vector3::getVector(740.52e9, 0, 0));
+	Jupiter.setVelocity(Vector3::getVector(0, 0, 1).scale(13.23e3));
 
-	Matter Venus;
-	Venus.setMass(4.867e24);
-	Venus.setPosition(Vector3::getVector(107e9,0,0));
-	Venus.setVelocity(Vector3::getVector(0, 0, 1).scale(35.26e3));
-	Venus.setRadius(6.0518e6);
-	Venus.setEmissivity(0.3);
+	Saturn.setMass(568.34e24);
+	Saturn.setPosition(Vector3::getVector(1352.55e9, 0, 0));
+	Saturn.setVelocity(Vector3::getVector(0, 0, 1).scale(10.18e3));
 
+	Uranus.setMass(86.813e24);
+	Uranus.setPosition(Vector3::getVector(2741.30e9, 0, 0));
+	Uranus.setVelocity(Vector3::getVector(0, 0, 1).scale(7.11e3));
+
+	Neptune.setMass(102.413e24);
+	Neptune.setPosition(Vector3::getVector(4444.45e9, 0, 0));
+	Neptune.setVelocity(Vector3::getVector(0, 0, 1).scale(6.10e3));
+
+	Pluto.setMass(1.303e22);
+	Pluto.setPosition(Vector3::getVector(7375.93e9, 0, 0));
+	Pluto.setVelocity(Vector3::getVector(0, 0, 1).scale(3.71e3));
+	/*
+    Halley.setMass(2.2e14);
+    Halley.setPosition(Vector3::getVector(0.57*AU,0,0));
+    Halley.setVelocity(Vector3::getVector(0,0,1).scale(54e3));
+	*/
     spacetime.addMatter(0,Sun);
-    spacetime.addMatter(3,Earth);
-    //spacetime.addMatter(5,Moon);
-    spacetime.addMatter(4,Mars);
-	spacetime.addMatter(1, Mercury);
-	spacetime.addMatter(2, Venus);
-
-
-//    for(int i=0;i<30;i++){
-//        spacetime.update();
-//        cout<<spacetime.getMatter(4).getPosition()<<endl;
-//    }
-
 
     return 0;
 }
 
-double scale=3e-11;
+bool start=true;
+double frame=0;
+double scale=1e-12;
 
 static void display(void)
 {
+    frame++;
+    Vector3 pos;
     spacetime.update();
-	cout << "temp of Earth::" << spacetime.getMatter(3).getTemperature() << endl;
-	cout << "temp of Sun::" << spacetime.getMatter(0).getTemperature() << endl;
-	cout << "temp of Mars::" << spacetime.getMatter(4).getTemperature() << endl;
-	cout << "temp of Venus::" << spacetime.getMatter(2).getTemperature() << endl;
-	cout << "temp of Mercury::" << spacetime.getMatter(1).getTemperature() << endl;
-
     const double t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
     const double a = t*90.0;
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity() ;
-    gluLookAt(0,15,0,0,0,0,0,0,-1);
+
+    gluLookAt(0,36,0,0,0,0,0,0,-1);
 
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    Vector3 pos;
-
-    glColor3d(0,1,0);
-    pos=spacetime.getMatter(3).getPosition();
-    pos=pos.scale(scale);
-    glPushMatrix();
+    if(frame>=0){
+        if(start){
+            //spacetime.addMatter(1,Mercury);
+			//spacetime.addMatter(2, Venus);
+            //spacetime.addMatter(3,Earth);
+            //spacetime.addMatter(4,Mars);
+            //spacetime.addMatter(10,Halley);
+			//spacetime.addMatter(5, Jupiter);
+			//spacetime.addMatter(6, Saturn);
+			spacetime.addMatter(7, Uranus);
+			spacetime.addMatter(8, Neptune);
+			spacetime.addMatter(9, Pluto);
+            start=false;
+        }
+		/*
+        glColor3d(1,0.5,0);
+        pos=spacetime.getMatter(1).getPosition();
+        pos=pos.scale(scale);
+        glPushMatrix();
         glTranslated(pos.getValue1(),pos.getValue2(),pos.getValue3());
-        glutSolidSphere(0.3,100,100);
-    glPopMatrix();
+        glutSolidSphere(1,18,18);
+        glPopMatrix();
 
-	/*
-   glColor3d(0,0,1);
-    pos=spacetime.getMatter(5).getPosition();
-    pos=pos.scale(scale);
-    glPushMatrix();
-        glTranslated(pos.getValue1(),pos.getValue2(),pos.getValue3());
-        glutSolidSphere(0.1,18,18);
-    glPopMatrix();
-	*/
+		glColor3d(0.1, 0.8, 0.8);
+		pos = spacetime.getMatter(2).getPosition();
+		pos = pos.scale(scale);
+		glPushMatrix();
+		glTranslated(pos.getValue1(), pos.getValue2(), pos.getValue3());
+		glutSolidSphere(1, 18, 18);
+		glPopMatrix();
 
-    glColor3d(1,0,0);
-    pos=spacetime.getMatter(4).getPosition();
-    pos=pos.scale(scale);
-    glPushMatrix();
+		glColor3d(0,1,0);
+        pos=spacetime.getMatter(3).getPosition();
+        pos=pos.scale(scale);
+        glPushMatrix();
         glTranslated(pos.getValue1(),pos.getValue2(),pos.getValue3());
-        glutSolidSphere(0.2,18,18);
-    glPopMatrix();
+        glutSolidSphere(1,18,18);
+        glPopMatrix();
+
+        glColor3d(1,0,0);
+        pos=spacetime.getMatter(4).getPosition();
+        pos=pos.scale(scale);
+        glPushMatrix();
+            glTranslated(pos.getValue1(),pos.getValue2(),pos.getValue3());
+            glutSolidSphere(1,18,18);
+        glPopMatrix();
+
+		glColor3d(0.9, 0.1, 0.1);
+		pos = spacetime.getMatter(5).getPosition();
+		pos = pos.scale(scale);
+		glPushMatrix();
+		glTranslated(pos.getValue1(), pos.getValue2(), pos.getValue3());
+		glutSolidSphere(1, 18, 18);
+		glPopMatrix();
+
+		glColor3d(0.8, 0.5, 0.1);
+		pos = spacetime.getMatter(6).getPosition();
+		pos = pos.scale(scale);
+		glPushMatrix();
+		glTranslated(pos.getValue1(), pos.getValue2(), pos.getValue3());
+		glutSolidSphere(1, 18, 18);
+		glPopMatrix();
+		*/
+		glColor3d(0.1, 0.5, 1);
+		pos = spacetime.getMatter(7).getPosition();
+		pos = pos.scale(scale);
+		glPushMatrix();
+		glTranslated(pos.getValue1(), pos.getValue2(), pos.getValue3());
+		glutSolidSphere(1, 18, 18);
+		glPopMatrix();
+
+		glColor3d(0, 0, 1);
+		pos = spacetime.getMatter(8).getPosition();
+		pos = pos.scale(scale);
+		glPushMatrix();
+		glTranslated(pos.getValue1(), pos.getValue2(), pos.getValue3());
+		glutSolidSphere(1, 18, 18);
+		glPopMatrix();
+		
+		glColor3d(0.2, 0.2, 0.2);
+		pos = spacetime.getMatter(9).getPosition();
+		pos = pos.scale(scale);
+		glPushMatrix();
+		glTranslated(pos.getValue1(), pos.getValue2(), pos.getValue3());
+		glutSolidSphere(1, 18, 18);
+		glPopMatrix();
+        
+		/*
+		glColor3d(0,0,0);
+        pos=spacetime.getMatter(10).getPosition();
+        pos=pos.scale(scale);
+        glPushMatrix();
+            glTranslated(pos.getValue1(),pos.getValue2(),pos.getValue3());
+            glutSolidSphere(1,18,18);
+        glPopMatrix();
+		*/
+    }
 
     glColor3d(1,1,0);
     pos=spacetime.getMatter(0).getPosition();
     pos=pos.scale(scale);
     glPushMatrix();
         glTranslated(pos.getValue1(),pos.getValue2(),pos.getValue3());
-        glutSolidSphere(0.6,18,18);
+        glutSolidSphere(3,18,18);
     glPopMatrix();
 
-	glColor3d(1, 0.5, 0);
-	pos = spacetime.getMatter(1).getPosition();
-	pos = pos.scale(scale);
-	glPushMatrix();
-	glTranslated(pos.getValue1(), pos.getValue2(), pos.getValue3());
-	glutSolidSphere(0.15, 18, 18);
-	glPopMatrix();
-
-	glColor3d(0.5, 1, 0.75);
-	pos = spacetime.getMatter(2).getPosition();
-	pos = pos.scale(scale);
-	glPushMatrix();
-	glTranslated(pos.getValue1(), pos.getValue2(), pos.getValue3());
-	glutSolidSphere(0.3, 18, 18);
-	glPopMatrix();
+    glLineWidth(3);
+    glBegin(GL_LINES);
+        glColor3d(0,1,1);
+        glVertex3d(-100,0,0);
+        glVertex3d(100,0,0);
+    glPopMatrix();
+    glEnd();
 
 
     glutSwapBuffers();
@@ -201,7 +264,7 @@ static void resize(int width, int height)
     glViewport(0, 0, width, height);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glFrustum(-ar, ar, -1.0, 1.0, 2.0, 100.0);
+    glFrustum(-ar, ar, -1.0, 1.0, 2.0, 45.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity() ;
@@ -213,20 +276,10 @@ static void key(unsigned char key, int x, int y)
     {
         case 27 :
         case 'q':
+            double temp = 60*60*24*365;
+            cout<<spacetime.getMatter(9).getTime()/temp<<endl;
+			getchar();
             exit(0);
-            break;
-
-        case '+':
-            slices++;
-            stacks++;
-            break;
-
-        case '-':
-            if (slices>3 && stacks>3)
-            {
-                slices--;
-                stacks--;
-            }
             break;
     }
 
@@ -259,6 +312,5 @@ int main(int argc, char *argv[])
     init();
 
     glutMainLoop();
-
     return EXIT_SUCCESS;
 }

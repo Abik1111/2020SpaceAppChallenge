@@ -2,6 +2,7 @@
 #include "vector3.h"
 #include <math.h>
 #include "constant.h"
+
 using namespace std;
 
 class Matter{
@@ -12,18 +13,24 @@ private:
 	double emissivity;
 	double radius;
 	bool blackBody;
+	bool blackHole;
+
     Vector3 position;
     Vector3 velocity;
     Vector3 acceleration;
-    double gamma;
+	double gamma;
+
+    double dt;
 public:
     Matter(){
         this->setMass();
-        gamma=1.0;
-        time=0.0;
 		this->setEmissivity(1);
 		blackBody = false;
 		this->setTemperature(273);
+		this->blackHole = false;
+
+        time=0.0;
+        dt=0;
     }
 
     void operator = (const Matter &m) {
@@ -32,26 +39,31 @@ public:
         this->position=m.position;
         this->velocity=m.velocity;
         this->acceleration=m.acceleration;
-        this->gamma=m.gamma;
+		this->gamma = m.gamma;
 		this->radius = m.radius;
 		this->temperature = m.temperature;
 		this->emissivity = m.emissivity;
 		this->blackBody = m.blackBody;
+		this->blackHole = m.blackHole;
+
     }
 
     //Setting values
     void setMass(double mass=1){
         this->mass=mass;
+		this->setBlackHole();
+
     }
     void setPosition(Vector3 position){
        this->position.setValue(position);
     }
     void setVelocity(Vector3 velocity){
         this->velocity.setValue(velocity);
-		
     }
 	void setRadius(double radius) {
 		this->radius = radius;
+		this->setBlackHole();
+
 	}
 	void setEmissivity(double emissivity) {
 		this->emissivity = emissivity;
@@ -62,17 +74,31 @@ public:
 	void setBlackBody(bool isBlackBody) {
 		this->blackBody = isBlackBody;
 	}
-
+	void setBlackHole() {
+		if ((2 * G*this->mass) / (C*C) > this->radius) {
+			this->blackHole = true;
+		}
+		else {
+			this->blackHole = false;
+		}
+	}
     //updating
-    void updatePosition(double dt){
+    void updatePosition(){
         time=time+dt;
         position=position+velocity.scale(dt);
     }
 
-    void updateVelocity(double dt){
-        velocity=velocity+acceleration.scale(dt);
-		double vecMag = velocity.getMagnitude();
-		this->gamma = 1 / (sqrt(1 - (vecMag*vecMag) / (C*C)));
+    void updateVelocity(double dt,double v_mag_ship){
+        double v_mag=velocity.getMagnitude();
+        double dv=v_mag_ship-v_mag;
+        if(dv>=0){
+            dv=dv/(1-v_mag_ship*v_mag/(C*C));
+            this->dt=dt/sqrt(1-dv*dv/(C*C));
+        }else{
+            dv=dv/(1-v_mag_ship*v_mag/(C*C));
+            this->dt=dt*sqrt(1-dv*dv/(C*C));
+        }
+        velocity=velocity+acceleration.scale(this->dt);
     }
 
     void updateAcceleration(Vector3 intensity){
@@ -80,14 +106,13 @@ public:
     }
 	void updateTemperature(double temperature) {
 		this->temperature = temperature;
-		
+
 	}
 
     //Getting values
-    Vector3 getPosition(){
-        return position;
+    double getMass(){
+        return mass;
     }
-
 	double getRadius() {
 		return radius;
 	}
@@ -100,9 +125,18 @@ public:
 	bool isBlackBody() {
 		return blackBody;
 	}
+    Vector3 getPosition(){
+        return position;
+    }
+    double getTime(){
+        return time;
+    }
+	bool isBlackHole() {
+		return this->blackHole;
+	}
 
 	double calculateTemperature(Vector3 effectPosition) {
-		double tPower4=0;
+		double tPower4 = 0;
 
 		double a = (1 - (velocity.getValue1()*velocity.getValue1() + velocity.getValue2()*velocity.getValue2() +
 			velocity.getValue3()*velocity.getValue3()) / (C*C));
@@ -131,13 +165,11 @@ public:
 		Vector3 dr = effectPosition - causePosition;
 		double drMag = dr.getMagnitude();
 		//cout << temperature << endl;
-		tPower4 = emissivity*(radius*radius*temperature*temperature*temperature*temperature)/(4*drMag*drMag) ;
+		tPower4 = emissivity * (radius*radius*temperature*temperature*temperature*temperature) / (4 * drMag*drMag);
 		//cout << tPower4 << endl;
 
 		return tPower4;
 	}
-
-
     Vector3 getGravitationalField(Vector3 effectPosition){
         Vector3 intensity;
 
@@ -168,7 +200,10 @@ public:
         Vector3 dr = effectPosition-causePosition;
         double GM = G*mass;
         double r_mag=dr.getMagnitude();
-        intensity = dr.scale(-GM/(r_mag*r_mag*r_mag));
+
+        double L2=GM*r_mag/(1-3*GM/(C*C*r_mag));
+
+        intensity = dr.scale(-(GM/(r_mag*r_mag*r_mag)/*-L2/(r_mag*r_mag*r_mag*r_mag)*/+3*GM*L2/(C*C*r_mag*r_mag*r_mag*r_mag*r_mag)));
 
         return intensity;
     }
@@ -176,4 +211,3 @@ public:
 
 
 };
-

@@ -12,7 +12,7 @@ private:
 	double emissivity;
 	double radius;
 	bool blackBody;
-	bool blackHole=false;
+	bool blackHole;
     Vector3 position;
     Vector3 velocity;
     Vector3 acceleration;
