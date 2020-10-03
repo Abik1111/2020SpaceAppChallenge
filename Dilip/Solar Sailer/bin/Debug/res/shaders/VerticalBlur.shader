@@ -21,13 +21,17 @@ uniform sampler2D u_slot;
 uniform int u_width;
 uniform int u_height;
 
-vec2 getNewUv(int dx_pixel,int dy_pixel, vec2 uv)
+vec2 getNewUv(int dy_pixel, vec2 uv)
 {
-    uv.x += float(dx_pixel)/float(u_width);
     uv.y += float(dy_pixel)/float(u_height);
+    if(uv.y>1){
+        uv.y = 1;
+    }
+    else if(uv.y<0){
+        uv.y = 0;
+    }
     return uv.xy;
 }
-
 out vec4 color;
 float weights[5] =  float[5](0.06136, 0.24477, 0.38774, 0.24477, 0.06136);
 void main()
@@ -36,7 +40,7 @@ void main()
     color = vec4(0.0);
     for(int i=-2; i<=2; i++)
     {
-        vec2 uv = getNewUv(0, i, v_TexCoord);
+        vec2 uv = getNewUv(i, v_TexCoord);
         color += weights[i+2]*texture(u_slot, uv);
     }
 }

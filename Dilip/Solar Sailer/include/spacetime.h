@@ -10,20 +10,45 @@ class Spacetime{
 private:
     double grid[N][N][N][3];
     map <int,Matter> matters;
-	double dt = 0.5*60*60;//this second per frame
+	double dt = 1*60*60;//this second per frame
     double gravDilFactor;
 
     //Property of spaceship
     double time;
     Vector3 position;
     Vector3 velocity;
+
+    Vector3 posFromMatter;
+    bool lock;
+    int lockId;
 public:
     Spacetime(){
+        lock = false;
         time = 0;
-        position.setValue(150e9,100,100);//150thryo//(-2.81622223e3,0,0);//81622223e3
-//        velocity.setValue(0.999*C,0,0);
+        //posFromMatter = Vector3::getVector(64000e3, 0, 0);
+        lockId = 3;
+        position.setValue(145.5e9, 0, 0);
+        //position.setValue(150e9,100,100);//150thryo//(-2.81622223e3,0,0);//81622223e3
+        //velocity.setValue(0.999*C,0,0);
         gravDilFactor=1;
 
+    }
+
+    /**Toggle Lock**/
+    void toggleLock(){
+        lock=!lock;
+        this->velocity = Vector3::getVector(0,0,0);
+        posFromMatter = position - getMatter(0).getPosition();
+        double temp=posFromMatter.getMagnitude();
+        lockId = 0;
+        for (auto& m: matters){
+            posFromMatter = position - m.second.getPosition();
+            if((temp-posFromMatter.getMagnitude())>=2e6){
+                temp = posFromMatter.getMagnitude();
+                lockId = m.first;
+            }
+        }
+        posFromMatter = position-getMatter(lockId).getPosition();
     }
 
     /**Position is relative to physics engine*/
@@ -48,11 +73,18 @@ public:
         time=time+dt;
         Vector3 intensity;
 
-        intensity = getGravitationalField(position);
-        //Update the velocity and position from space time gravity
-        this->velocity = this->velocity+intensity.scale(dt);
-        this->position = this->position+this->velocity.scale(dt);
-
+        if(!lock){
+//            for (auto& m: matters){
+//                intensity =intensity + m.second.getGravitationalField(position).scale(9e28/m.second.getMass());
+//            }
+            intensity = getGravitationalField(position,dt);
+            //Update the velocity and position from space time gravity
+            this->velocity = this->velocity+intensity.scale(dt);
+            this->position = this->position+this->velocity.scale(dt);
+        }else{
+            posFromMatter = posFromMatter+this->velocity.scale(dt);
+            position = getMatter(lockId).getPosition() + posFromMatter;
+        }
 		double temperatureNew;
 		double tPower4 = 0.0;
 		double radius;
@@ -208,6 +240,14 @@ public:
     glm::vec3 getDirection(){
         glm::vec3 dir = glm::vec3(glm::normalize(glm::dvec3(velocity.getValue1(), velocity.getValue2(), velocity.getValue3())));
         return dir;
+    }
+
+    double getDt(){
+        return dt;
+    }
+
+    bool isLocked(){
+        return lock;
     }
 
     void getGrid(double grid[N][N][N][3]){

@@ -2,59 +2,34 @@
 <CodeBlocks_layout_file>
 	<FileVersion major="1" minor="0" />
 	<ActiveTarget name="Debug" />
+	<File name="bin\Debug\res\shaders\Colorless.shader" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="158" topLine="0" />
+		</Cursor>
+	</File>
 	<File name="bin\Debug\res\shaders\Postprocessing.shader" open="0" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="249" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="bin\Debug\res\shaders\Skybox.shader" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="bin\Debug\res\shaders\Terrain.shader" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="330" topLine="4" />
+			<Cursor1 position="3614" topLine="87" />
 		</Cursor>
 	</File>
-	<File name="bin\Debug\res\shaders\AnimatedModel.shader" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="bin\Debug\res\shaders\Bloom.shader" open="1" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="920" topLine="0" />
+			<Cursor1 position="0" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="bin\Debug\res\shaders\Water.shader" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="bin\Debug\res\shaders\Dummy.shader" open="0" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="641" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="bin\Debug\res\shaders\Basic.shader" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="1" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="3442" topLine="70" />
-		</Cursor>
-	</File>
-	<File name="bin\Debug\res\shaders\Particles.shader" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="33" topLine="9" />
-		</Cursor>
-	</File>
-	<File name="bin\Debug\res\shaders\Billboard.shader" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="573" topLine="11" />
-		</Cursor>
-	</File>
-	<File name="bin\Debug\res\shaders\NormalMapped.shader" open="0" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="697" topLine="15" />
-		</Cursor>
-	</File>
-	<File name="bin\Debug\res\shaders\GUI.shader" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="193" topLine="0" />
-		</Cursor>
-	</File>
-	<File name="include\spacetime.h" open="1" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="213" topLine="5" />
+			<Cursor1 position="0" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="include\Engine.cpp" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="84297" topLine="20" />
+			<Cursor1 position="81090" topLine="72" />
 		</Cursor>
 		<Folding>
 			<Collapse line="0" />
@@ -466,6 +441,7 @@
 			<Collapse line="2426" />
 			<Collapse line="2439" />
 			<Collapse line="2443" />
+			<Collapse line="2449" />
 			<Collapse line="2461" />
 			<Collapse line="2465" />
 			<Collapse line="2466" />
@@ -474,6 +450,10 @@
 			<Collapse line="2480" />
 			<Collapse line="2484" />
 			<Collapse line="2488" />
+			<Collapse line="2493" />
+			<Collapse line="2497" />
+			<Collapse line="2502" />
+			<Collapse line="2507" />
 			<Collapse line="2512" />
 			<Collapse line="2515" />
 			<Collapse line="2526" />
@@ -519,7 +499,6 @@
 			<Collapse line="2801" />
 			<Collapse line="2808" />
 			<Collapse line="2811" />
-			<Collapse line="2812" />
 			<Collapse line="2828" />
 			<Collapse line="2835" />
 			<Collapse line="2838" />
@@ -529,140 +508,199 @@
 			<Collapse line="2857" />
 			<Collapse line="2862" />
 			<Collapse line="2872" />
-			<Collapse line="2876" />
-			<Collapse line="2880" />
-			<Collapse line="2884" />
-			<Collapse line="2888" />
-			<Collapse line="2898" />
-			<Collapse line="2909" />
-			<Collapse line="2925" />
-			<Collapse line="2935" />
-			<Collapse line="2944" />
-			<Collapse line="2950" />
-			<Collapse line="2955" />
-			<Collapse line="2962" />
-			<Collapse line="2973" />
-			<Collapse line="2977" />
-			<Collapse line="3002" />
-			<Collapse line="3006" />
-			<Collapse line="3017" />
+			<Collapse line="2883" />
+			<Collapse line="2887" />
+			<Collapse line="2891" />
+			<Collapse line="2901" />
+			<Collapse line="2912" />
+			<Collapse line="2928" />
+			<Collapse line="2938" />
+			<Collapse line="2947" />
+			<Collapse line="2953" />
+			<Collapse line="2958" />
+			<Collapse line="2965" />
+			<Collapse line="2976" />
+			<Collapse line="2980" />
+			<Collapse line="3005" />
+			<Collapse line="3009" />
 			<Collapse line="3020" />
-			<Collapse line="3024" />
+			<Collapse line="3023" />
 			<Collapse line="3027" />
-			<Collapse line="3031" />
-			<Collapse line="3036" />
-			<Collapse line="3052" />
+			<Collapse line="3030" />
+			<Collapse line="3034" />
+			<Collapse line="3039" />
 			<Collapse line="3055" />
-			<Collapse line="3059" />
-			<Collapse line="3065" />
-			<Collapse line="3071" />
-			<Collapse line="3078" />
-			<Collapse line="3084" />
-			<Collapse line="3092" />
-			<Collapse line="3097" />
-			<Collapse line="3101" />
+			<Collapse line="3058" />
+			<Collapse line="3062" />
+			<Collapse line="3068" />
+			<Collapse line="3074" />
+			<Collapse line="3081" />
+			<Collapse line="3087" />
+			<Collapse line="3095" />
+			<Collapse line="3100" />
 			<Collapse line="3104" />
-			<Collapse line="3111" />
-			<Collapse line="3115" />
-			<Collapse line="3122" />
-			<Collapse line="3129" />
-			<Collapse line="3134" />
+			<Collapse line="3107" />
+			<Collapse line="3114" />
+			<Collapse line="3118" />
+			<Collapse line="3125" />
+			<Collapse line="3132" />
 			<Collapse line="3137" />
-			<Collapse line="3142" />
+			<Collapse line="3140" />
 			<Collapse line="3145" />
-			<Collapse line="3150" />
-			<Collapse line="3156" />
-			<Collapse line="3163" />
-			<Collapse line="3167" />
-			<Collapse line="3171" />
+			<Collapse line="3148" />
+			<Collapse line="3153" />
+			<Collapse line="3159" />
+			<Collapse line="3166" />
+			<Collapse line="3170" />
 			<Collapse line="3174" />
-			<Collapse line="3193" />
+			<Collapse line="3177" />
 			<Collapse line="3196" />
-			<Collapse line="3201" />
+			<Collapse line="3199" />
 			<Collapse line="3204" />
-			<Collapse line="3214" />
-			<Collapse line="3218" />
-			<Collapse line="3247" />
+			<Collapse line="3207" />
+			<Collapse line="3217" />
+			<Collapse line="3221" />
 			<Collapse line="3250" />
-			<Collapse line="3254" />
+			<Collapse line="3253" />
 			<Collapse line="3257" />
-			<Collapse line="3261" />
+			<Collapse line="3260" />
 			<Collapse line="3264" />
-			<Collapse line="3272" />
-			<Collapse line="3276" />
-			<Collapse line="3281" />
-			<Collapse line="3289" />
-			<Collapse line="3291" />
-			<Collapse line="3301" />
-			<Collapse line="3305" />
-			<Collapse line="3310" />
-			<Collapse line="3311" />
-			<Collapse line="3319" />
-			<Collapse line="3324" />
-			<Collapse line="3326" />
-			<Collapse line="3334" />
-			<Collapse line="3338" />
-			<Collapse line="3342" />
-			<Collapse line="3347" />
-			<Collapse line="3357" />
-			<Collapse line="3361" />
-			<Collapse line="3367" />
-			<Collapse line="3373" />
-			<Collapse line="3379" />
-			<Collapse line="3383" />
-			<Collapse line="3389" />
-			<Collapse line="3393" />
-			<Collapse line="3395" />
+			<Collapse line="3267" />
+			<Collapse line="3275" />
+			<Collapse line="3279" />
+			<Collapse line="3284" />
+			<Collapse line="3292" />
+			<Collapse line="3294" />
+			<Collapse line="3304" />
+			<Collapse line="3308" />
+			<Collapse line="3313" />
+			<Collapse line="3314" />
+			<Collapse line="3322" />
+			<Collapse line="3327" />
+			<Collapse line="3329" />
+			<Collapse line="3337" />
+			<Collapse line="3341" />
+			<Collapse line="3345" />
+			<Collapse line="3360" />
+			<Collapse line="3370" />
+			<Collapse line="3376" />
+			<Collapse line="3382" />
+			<Collapse line="3386" />
+			<Collapse line="3392" />
+			<Collapse line="3396" />
+			<Collapse line="3398" />
 		</Folding>
 	</File>
-	<File name="bin\Debug\res\shaders\Dummy.shader" open="0" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="bin\Debug\res\shaders\Billboard.shader" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="0" topLine="0" />
+			<Cursor1 position="573" topLine="11" />
 		</Cursor>
 	</File>
-	<File name="bin\Debug\res\shaders\Colorless.shader" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="bin\Debug\res\shaders\NormalMapped.shader" open="0" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="158" topLine="7" />
+			<Cursor1 position="697" topLine="15" />
 		</Cursor>
 	</File>
-	<File name="bin\Debug\res\shaders\Terrain.shader" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="bin\Debug\res\shaders\AnimatedModel.shader" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="3614" topLine="87" />
+			<Cursor1 position="920" topLine="0" />
 		</Cursor>
+	</File>
+	<File name="bin\Debug\res\shaders\Particles.shader" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="33" topLine="9" />
+		</Cursor>
+	</File>
+	<File name="bin\Debug\res\shaders\Basic.shader" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="1" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="3442" topLine="70" />
+		</Cursor>
+	</File>
+	<File name="bin\Debug\res\shaders\GUI.shader" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="461" topLine="8" />
+		</Cursor>
+	</File>
+	<File name="bin\Debug\res\shaders\Skybox.shader" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="330" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="bin\Debug\res\shaders\Water.shader" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="641" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="include\spacetime.h" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="271" topLine="0" />
+		</Cursor>
+		<Folding>
+			<Collapse line="0" />
+			<Collapse line="43" />
+			<Collapse line="45" />
+			<Collapse line="54" />
+			<Collapse line="59" />
+			<Collapse line="63" />
+			<Collapse line="67" />
+			<Collapse line="71" />
+			<Collapse line="93" />
+			<Collapse line="99" />
+			<Collapse line="109" />
+			<Collapse line="114" />
+			<Collapse line="117" />
+			<Collapse line="131" />
+			<Collapse line="141" />
+			<Collapse line="146" />
+			<Collapse line="149" />
+			<Collapse line="167" />
+			<Collapse line="170" />
+			<Collapse line="171" />
+			<Collapse line="180" />
+			<Collapse line="183" />
+			<Collapse line="184" />
+			<Collapse line="185" />
+			<Collapse line="202" />
+			<Collapse line="204" />
+			<Collapse line="205" />
+			<Collapse line="212" />
+			<Collapse line="215" />
+			<Collapse line="216" />
+			<Collapse line="223" />
+			<Collapse line="228" />
+			<Collapse line="231" />
+			<Collapse line="235" />
+			<Collapse line="239" />
+			<Collapse line="244" />
+			<Collapse line="248" />
+			<Collapse line="252" />
+			<Collapse line="253" />
+			<Collapse line="254" />
+			<Collapse line="255" />
+		</Folding>
 	</File>
 	<File name="main.cpp" open="1" top="1" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="854" topLine="40" />
+			<Cursor1 position="9793" topLine="278" />
 		</Cursor>
 		<Folding>
-			<Collapse line="146" />
-			<Collapse line="150" />
-			<Collapse line="166" />
-			<Collapse line="180" />
-			<Collapse line="201" />
-			<Collapse line="213" />
-			<Collapse line="228" />
-			<Collapse line="249" />
-			<Collapse line="260" />
-			<Collapse line="268" />
-			<Collapse line="297" />
 			<Collapse line="304" />
-			<Collapse line="328" />
-			<Collapse line="360" />
-			<Collapse line="466" />
-			<Collapse line="478" />
-			<Collapse line="483" />
-			<Collapse line="488" />
-			<Collapse line="490" />
-			<Collapse line="500" />
-			<Collapse line="511" />
-			<Collapse line="512" />
-			<Collapse line="514" />
-			<Collapse line="517" />
-			<Collapse line="522" />
-			<Collapse line="524" />
-			<Collapse line="527" />
-			<Collapse line="534" />
+			<Collapse line="367" />
+			<Collapse line="486" />
+			<Collapse line="491" />
+			<Collapse line="496" />
+			<Collapse line="521" />
+			<Collapse line="538" />
 		</Folding>
+	</File>
+	<File name="bin\Debug\res\shaders\VerticalBlur.shader" open="1" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="494" topLine="23" />
+		</Cursor>
+	</File>
+	<File name="bin\Debug\res\shaders\HorizotalBlur.shader" open="1" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="575" topLine="19" />
+		</Cursor>
 	</File>
 </CodeBlocks_layout_file>
