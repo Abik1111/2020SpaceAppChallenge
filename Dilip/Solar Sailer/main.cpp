@@ -61,7 +61,8 @@ Spacetime earthSystem;
 Vector3 pos;
 double radius_scale = 30.0/695842e3;//6e-6;
 double position_scale = 75e-11;//15e-11;
-double moons_position_scale = 120e-10;//15e-11;
+double moons_position_scale = position_scale; //120e-10;//15e-11;
+
 int physicsInitiate(){
 	Matter Mercury;
 	Matter Earth;
@@ -129,7 +130,6 @@ int physicsInitiate(){
 	spacetime.addMatter(6, Saturn);
 	spacetime.addMatter(7, Uranus);
 	spacetime.addMatter(8, Neptune);
-//	spacetime.addMatter(9, Pluto);
 
     Matter Moon;
     Moon.setMass(7.342e22);
@@ -137,6 +137,8 @@ int physicsInitiate(){
     Moon.setVelocity(Vector3::getVector(0,0,1).scale(1.002e3));
     Moon.setRadius(1734.4e3);
 
+    Earth.setPosition(Vector3::getVector(0.00, 0.00, 0.00));
+    Earth.setVelocity(Vector3::getVector(0.00, 0.00, 0.00));
     earthSystem.addMatter(0, Earth);
     earthSystem.addMatter(1, Moon);
     return 0;
@@ -230,10 +232,6 @@ void init(){
         shader.addUniform1i("u_textureMap", 0);
         shader.addUniform1i("u_texSlot", 0);
     }
-
-//    earth.setPosition(glm::vec3(0.0, 0.0, -5.0));
-//    closeEarth.loadPlanet(1.0f, 90.0, 64, 256, 0.1f, "res/textures/Earth/Diffuse_2K.png", "res/textures/Earth/Bump_2K.png", 42);
-//    closeEarth.setPosition(glm::vec3(0.0, 0.0, -5.0));
 
 //    sun.loadPlanet("res/textures/sun.png", 9.0f , 32);
     sun.loadPlanet("res/textures/sun.png", radius_scale*spacetime.getMatter(0).getRadius(), 16);
@@ -373,6 +371,8 @@ static void display(void){
     handleMouse();
 
     spacetime.update();
+    earthSystem.update();
+
     ship.setPosition(spacetime.getPosition(position_scale));
 
     glm::dvec3 ship_position = spacetime.getPosition(1.0);
@@ -419,7 +419,8 @@ static void display(void){
         //earth.increaseRotation(360.0/72.0);
         earth.drawPlanet(shader, viewProj);
 
-            pos = pos + earthSystem.getMatter(1).getPosition().scale(moons_position_scale);
+            pos = earthSystem.getMatter(1).getPosition() - earthSystem.getMatter(0).getPosition();
+            pos = pos.scale(moons_position_scale) + spacetime.getMatter(3).getPosition().scale(position_scale);
             moon.setPosition(glm::vec3(pos.getValue1(), pos.getValue2(), pos.getValue3()));
             //mars.increaseRotation(360.0/72.0);
             moon.drawPlanet(shader, viewProj);

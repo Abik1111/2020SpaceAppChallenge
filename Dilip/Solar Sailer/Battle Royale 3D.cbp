@@ -60,18 +60,19 @@
 		<Unit filename="bin/Debug/res/shaders/Skybox.shader" />
 		<Unit filename="bin/Debug/res/shaders/Terrain.shader" />
 		<Unit filename="bin/Debug/res/shaders/Water.shader" />
+		<Unit filename="include/Audio.cpp" />
+		<Unit filename="include/Bbody.h" />
 		<Unit filename="include/Engine.cpp" />
-		<Unit filename="include/imgui/imconfig.h" />
-		<Unit filename="include/imgui/imgui.h" />
-		<Unit filename="include/imgui/imgui_impl_glut.h" />
-		<Unit filename="include/imgui/imgui_impl_opengl2.h" />
-		<Unit filename="include/imgui/imgui_impl_opengl3.h" />
-		<Unit filename="include/imgui/imgui_internal.h" />
-		<Unit filename="include/imgui/imstb_rectpack.h" />
-		<Unit filename="include/imgui/imstb_textedit.h" />
-		<Unit filename="include/imgui/imstb_truetype.h" />
+		<Unit filename="include/Engine.cpp.save-failed" />
+		<Unit filename="include/constant.h" />
+		<Unit filename="include/imgui/example_glut_opengl2/Makefile" />
+		<Unit filename="include/imgui/example_glut_opengl2/example_glut_opengl2.vcxproj" />
+		<Unit filename="include/imgui/example_glut_opengl2/example_glut_opengl2.vcxproj.filters" />
+		<Unit filename="include/matter.h" />
+		<Unit filename="include/spacetime.h" />
 		<Unit filename="include/stb_image/stb_image.cpp" />
 		<Unit filename="include/stb_image/stb_image.h" />
+		<Unit filename="include/vector3.h" />
 		<Unit filename="main.cpp" />
 		<Extensions>
 			<code_completion />
