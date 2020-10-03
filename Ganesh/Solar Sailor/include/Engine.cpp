@@ -2452,7 +2452,7 @@ private:
     glm::vec3 position;
     glm::vec3 direction;
     glm::dvec3 acceleration;
-    const double acceleration_mag = 9.0/60.0;
+    const double acceleration_mag = 60.0/60.0;
     float yaw;
     float pitch;
     ObjMesh body;
@@ -2814,11 +2814,11 @@ namespace Tools{
     private:
         glm::vec3 position;
         glm::vec3 camDirection;
-        float yaw = 0.0;
+        float yaw = -90.0;
         float pitch = 0.0;
 
-        float old_yaw;
-        float old_pitch;
+        float old_yaw = -90.0;
+        float old_pitch = 0.0;
 
         float dot_product;
         const float sensitivity = 0.125f;
@@ -2874,8 +2874,11 @@ namespace Tools{
             position = pos;
         }
 
-        void setDirection(glm::vec3 dir){
-            camDirection = dir;
+        void setYawPitch(float new_yaw, float new_pitch){
+            yaw = new_yaw;
+            old_yaw = new_yaw;
+            pitch = new_pitch;
+            old_pitch = new_pitch;
         }
 
         glm::vec3 getPosition(){
@@ -3368,7 +3371,7 @@ namespace Tools{
             for(unsigned int i=0 ; i<(Shaderlocations.size()-1); i++){
                 processLocations.push_back(Shaderlocations[i]);
             }
-            postProcessor.setPostprocessing(processLocations, width/2, height/2, screenWidth, screenHeight);
+            postProcessor.setPostprocessing(processLocations, width/2.0, height/2.0, screenWidth, screenHeight);
         }
 
         void startSampling(bool specifyGlow = false){

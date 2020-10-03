@@ -25,7 +25,7 @@ out vec4 color;
 
 void main()
 {
-    //color = texture(u_slot, v_TexCoord);
-    //if(color.a < 0.1)
+    color = texture(u_slot, v_TexCoord);
+    if(color.a < 0.1)
         discard;
 }

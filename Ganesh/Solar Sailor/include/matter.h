@@ -201,6 +201,10 @@ public:
         double GM = G*mass;
         double r_mag=dr.getMagnitude();
 
+        if(r_mag<=3){
+            r_mag=3;
+        }
+
         double L2=GM*r_mag/(1-3*GM/(C*C*r_mag));
 
         intensity = dr.scale(-(GM/(r_mag*r_mag*r_mag)/*-L2/(r_mag*r_mag*r_mag*r_mag)*/+3*GM*L2/(C*C*r_mag*r_mag*r_mag*r_mag*r_mag)));

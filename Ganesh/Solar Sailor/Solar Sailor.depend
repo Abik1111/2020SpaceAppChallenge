@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1601727225 source:c:\users\user\documents\codeblocks\solar sailor\main.cpp
+1601748042 source:c:\users\user\documents\codeblocks\solar sailor\main.cpp
 	<GL/glew.h>
 	<GL/glut.h>
 	<stdlib.h>
@@ -33,7 +33,7 @@
 	<GL/glu.h>
 	<stdlib.h>
 
-1601714812 c:\users\user\documents\codeblocks\solar sailor\include\engine.cpp
+1601746819 c:\users\user\documents\codeblocks\solar sailor\include\engine.cpp
 	<GL/glew.h>
 	<GL/glut.h>
 	<stdlib.h>
@@ -52,7 +52,7 @@
 	<cstdlib>
 	<math.h>
 
-1601231780 c:\users\user\documents\codeblocks\solar sailor\include\stb_image\stb_image.h
+1601746819 c:\users\user\documents\codeblocks\solar sailor\include\stb_image\stb_image.h
 	"stb_image.h"
 	<stdio.h>
 	<stdlib.h>
@@ -69,25 +69,25 @@
 	<intrin.h>
 	<arm_neon.h>
 
-1601730818 c:\users\user\documents\codeblocks\solar sailor\include\spacetime.h
+1601748235 c:\users\user\documents\codeblocks\solar sailor\include\spacetime.h
 	"matter.h"
 	<map>
 
-1601712299 c:\users\user\documents\codeblocks\solar sailor\include\matter.h
+1601747574 c:\users\user\documents\codeblocks\solar sailor\include\matter.h
 	<iostream>
 	"vector3.h"
 	<math.h>
 	"constant.h"
 
-1601712299 c:\users\user\documents\codeblocks\solar sailor\include\vector3.h
+1601731071 c:\users\user\documents\codeblocks\solar sailor\include\vector3.h
 	<iostream>
 	<math.h>
 
-1601712299 c:\users\user\documents\codeblocks\solar sailor\include\constant.h
+1601731071 c:\users\user\documents\codeblocks\solar sailor\include\constant.h
 
-1601231780 source:c:\users\user\documents\codeblocks\solar sailor\include\audio.cpp
+1601746819 source:c:\users\user\documents\codeblocks\solar sailor\include\audio.cpp
 
-1601714812 source:c:\users\user\documents\codeblocks\solar sailor\include\engine.cpp
+1601746819 source:c:\users\user\documents\codeblocks\solar sailor\include\engine.cpp
 	<GL/glew.h>
 	<GL/glut.h>
 	<stdlib.h>
@@ -237,6 +237,6 @@
 	<stdint.h>
 	"imstb_textedit.h"
 
-1601231780 source:c:\users\user\documents\codeblocks\solar sailor\include\stb_image\stb_image.cpp
+1601746819 source:c:\users\user\documents\codeblocks\solar sailor\include\stb_image\stb_image.cpp
 	"stb_image.h"
 

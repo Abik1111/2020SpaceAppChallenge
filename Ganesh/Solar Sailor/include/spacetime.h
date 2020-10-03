@@ -23,11 +23,13 @@ private:
     int lockId;
 public:
     Spacetime(){
-        lock=false;
+        lock = false;
         time = 0;
-        position.setValue(700.52e9,100,100);
+        //posFromMatter = Vector3::getVector(64000e3, 0, 0);
+        lockId = 3;
+        position.setValue(145.5e9, 0, 0);
         //position.setValue(150e9,100,100);//150thryo//(-2.81622223e3,0,0);//81622223e3
-//        velocity.setValue(0.999*C,0,0);
+        //velocity.setValue(0.999*C,0,0);
         gravDilFactor=1;
 
     }
@@ -70,12 +72,12 @@ public:
     void update(){
         time=time+dt;
         Vector3 intensity;
-//        for (auto& m: matters){
-//            intensity =intensity + m.second.getGravitationalField(position).scale(9e27/m.second.getMass());
-//        }
 
         if(!lock){
-            intensity = getGravitationalField(position,dt);
+//            for (auto& m: matters){
+//                intensity =intensity + m.second.getGravitationalField(position).scale(9e28/m.second.getMass());
+//            }
+            intensity = getGravitationalField(position);
             //Update the velocity and position from space time gravity
             this->velocity = this->velocity+intensity.scale(dt);
             this->position = this->position+this->velocity.scale(dt);
@@ -238,6 +240,14 @@ public:
     glm::vec3 getDirection(){
         glm::vec3 dir = glm::vec3(glm::normalize(glm::dvec3(velocity.getValue1(), velocity.getValue2(), velocity.getValue3())));
         return dir;
+    }
+
+    double getDt(){
+        return dt;
+    }
+
+    bool isLocked(){
+        return lock;
     }
 
     void getGrid(double grid[N][N][N][3]){
