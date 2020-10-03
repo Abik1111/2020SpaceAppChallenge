@@ -2452,7 +2452,7 @@ private:
     glm::vec3 position;
     glm::vec3 direction;
     glm::dvec3 acceleration;
-    const double acceleration_mag = 60.0/60.0;
+    const double acceleration_mag = 99.0;
     float yaw;
     float pitch;
     ObjMesh body;

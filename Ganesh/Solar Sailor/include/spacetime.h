@@ -10,7 +10,7 @@ class Spacetime{
 private:
     double grid[N][N][N][3];
     map <int,Matter> matters;
-	double dt = 1*60*60;//this second per frame
+	double dt = 9*60;//this second per frame
     double gravDilFactor;
 
     //Property of spaceship

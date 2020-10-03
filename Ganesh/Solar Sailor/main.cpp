@@ -58,11 +58,9 @@ bool keyBuffer[128];
 bool mouseBuffer[2];
 
 Spacetime spacetime;
-Spacetime earthSystem;
 Vector3 pos;
-double radius_scale = 30.0/695842e3;//6e-6;
-double position_scale = 75e-11;//15e-11;
-double moons_position_scale = 12e-10; //120e-10;//15e-11;
+double radius_scale = 27.0/695842e3;//6e-6;
+double position_scale = 90e-11;//15e-11;
 
 int physicsInitiate(){
 	Matter Mercury;
@@ -93,6 +91,12 @@ int physicsInitiate(){
     Earth.setVelocity(Vector3::getVector(0,0,1).scale(29.5e3));
     Earth.setRadius(6357e3);
 
+        Matter Moon;
+        Moon.setMass(7.342e22);
+        Moon.setPosition(Vector3::getVector(0.3633e9+147.09e9,0,0));
+        Moon.setVelocity(Vector3::getVector(0,0,1).scale(1.0823e3+29.5e3));
+        Moon.setRadius(1734.4e3);
+
     Mars.setMass(6.4171e23);
     Mars.setPosition(Vector3::getVector(206.62e9,0,0));
     Mars.setVelocity(Vector3::getVector(0,0,1).scale(25.80e3));
@@ -118,30 +122,16 @@ int physicsInitiate(){
 	Neptune.setVelocity(Vector3::getVector(0, 0, 1).scale(6.10e3));
     Neptune.setRadius(24622e3);
 
-//	Pluto.setMass(1.303e22);
-//	Pluto.setPosition(Vector3::getVector(7375.93e9, 0, 0));
-//	Pluto.setVelocity(Vector3::getVector(0, 0, 1).scale(3.71e3));
-
 	spacetime.addMatter(0,Sun);
     spacetime.addMatter(1,Mercury);
 	spacetime.addMatter(2, Venus);
     spacetime.addMatter(3,Earth);
+        spacetime.addMatter(31,Moon);
     spacetime.addMatter(4,Mars);
     spacetime.addMatter(5, Jupiter);
 	spacetime.addMatter(6, Saturn);
 	spacetime.addMatter(7, Uranus);
 	spacetime.addMatter(8, Neptune);
-
-    Matter Moon;
-    Moon.setMass(7.342e22);
-    Moon.setPosition(Vector3::getVector(0.3633e9,0,0));
-    Moon.setVelocity(Vector3::getVector(0,0,1).scale(1.0823e3));
-    Moon.setRadius(1734.4e3);
-
-    Earth.setPosition(Vector3::getVector(0.00, 0.00, 0.00));
-    Earth.setVelocity(Vector3::getVector(0.00, 0.00, 0.00));
-    earthSystem.addMatter(0, Earth);
-    earthSystem.addMatter(1, Moon);
     return 0;
 }
 
@@ -239,7 +229,7 @@ void init(){
     mercury.loadPlanet("res/textures/mercury.png", radius_scale*spacetime.getMatter(1).getRadius(), 8);
     venus.loadPlanet("res/textures/venus.png", radius_scale*spacetime.getMatter(2).getRadius(), 8);
     earth.loadPlanet("res/textures/earth.png", radius_scale*spacetime.getMatter(3).getRadius(), 8);
-        moon.loadPlanet("res/textures/moon.png", radius_scale*earthSystem.getMatter(1).getRadius(), 8);
+        moon.loadPlanet("res/textures/moon.png", radius_scale*spacetime.getMatter(31).getRadius(), 8);
     mars.loadPlanet("res/textures/mars.png", radius_scale*spacetime.getMatter(4).getRadius(), 8);
     jupiter.loadPlanet("res/textures/jupiter.png", radius_scale*spacetime.getMatter(5).getRadius(), 8);
     saturn.loadPlanet("res/textures/saturn.png", radius_scale*spacetime.getMatter(6).getRadius(), 8);
@@ -387,7 +377,6 @@ static void display(void){
     }
     else if(currentState == SAILING){
         spacetime.update();
-        earthSystem.update();
         double dt = spacetime.getDt();
 
         ship.setPosition(spacetime.getPosition(position_scale));
@@ -408,6 +397,7 @@ static void display(void){
             pos=spacetime.getMatter(0).getPosition();
             pos=pos.scale(position_scale);
             sun.setPosition(glm::vec3(pos.getValue1(), pos.getValue2(), pos.getValue3()));
+            sun.increaseRotation(360.0*dt/(25.31*24.0*60.0*60.0));
             sun.drawPlanet(shader, viewProj);
             ship.draw(shader, viewProj);
             shader.addUniform1i("u_useLighting", 1);
@@ -430,8 +420,8 @@ static void display(void){
             earth.increaseRotation(360.0*dt/(24.0*60.0*60.0));
             earth.drawPlanet(shader, viewProj);
 
-                pos = earthSystem.getMatter(1).getPosition() - earthSystem.getMatter(0).getPosition();
-                pos = pos.scale(moons_position_scale) + spacetime.getMatter(3).getPosition().scale(position_scale);
+                pos=spacetime.getMatter(31).getPosition();
+                pos=pos.scale(position_scale);
                 moon.setPosition(glm::vec3(pos.getValue1(), pos.getValue2(), pos.getValue3()));
                 moon.increaseRotation(360.0*dt/(27.4*24.0*60.0*60.0));
                 moon.drawPlanet(shader, viewProj);
