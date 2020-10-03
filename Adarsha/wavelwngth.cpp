@@ -11,7 +11,7 @@ float Gamma = 0.80;
  float IntensityMax = 255;
 float rgb[3] ;
 
-		 if((Wavelength >= 380) && (Wavelength < 440)) {
+	if((Wavelength >= 380) && (Wavelength < 440)) {
         Red = -(Wavelength - 440) / (440 - 380);
         Green = 0.0;
         Blue = 1.0;
@@ -135,8 +135,8 @@ printf("min:%f", min_val);
             
         }
         
-         else
-         {
+        else
+        {
 		
             h = 60 * ((r - g) / (max_val - min_val)) + 240;
         }
