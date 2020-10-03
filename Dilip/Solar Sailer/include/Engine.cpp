@@ -2616,7 +2616,6 @@ struct PosUvID{
     unsigned int id;
 };
 
-//TODO: Complete the lens flare calculations
 class LensFlare{
 private:
     OpenGL::Shader shader;
@@ -2713,30 +2712,31 @@ private:
     glm::vec3 position;
     glm::vec2 size;
     static OpenGL::Shader shader;
+    OpenGL::Texture texture;
 
     /**
     *Calculate the positions of quads to make sure they are always facing directly to camera
     */
-    void calculateVertices(glm::mat4 view){
-        glm::vec3 cameraRight = glm::vec3(view[0][0], view[1][0], view[2][0]);
-        glm::vec3 cameraUp = glm::vec3(view[0][1], view[1][1], view[2][1]);
+    bool calculateVertices(glm::mat4 viewProjection){
         std::vector<PosUV> vertices;
-        const float squareVertices[] = {
-             -0.5f, -0.5f,
-              0.5f, -0.5f,
-              0.5f,  0.5f,
-             -0.5f,  0.5f
-         };
-         vertices.push_back({position+cameraRight*squareVertices[0]*size.x +cameraUp*squareVertices[1]*size.y, glm::vec2(0, 0)});
-         vertices.push_back({position+cameraRight*squareVertices[2]*size.x +cameraUp*squareVertices[3]*size.y, glm::vec2(1, 0)});
-         vertices.push_back({position+cameraRight*squareVertices[4]*size.x +cameraUp*squareVertices[5]*size.y, glm::vec2(1, 1)});
-         vertices.push_back({position+cameraRight*squareVertices[6]*size.x +cameraUp*squareVertices[7]*size.y, glm::vec2(0, 1)});
+
+         glm::vec4 pos_in_ndc = viewProjection*glm::vec4(position, 1.0);
+         if(pos_in_ndc.w<=0.0){
+            return false;
+         }
+         glm::vec3 new_position = glm::vec3(float(1.0/pos_in_ndc.w)*pos_in_ndc);
+         new_position.z = -1.0;
+         vertices.push_back({new_position+glm::vec3(-0.5*size.x, -0.5*size.y, 0.0), glm::vec2(0, 0)});
+         vertices.push_back({new_position+glm::vec3( 0.5*size.x, -0.5*size.y, 0.0), glm::vec2(1, 0)});
+         vertices.push_back({new_position+glm::vec3( 0.5*size.x,  0.5*size.y, 0.0), glm::vec2(1, 1)});
+         vertices.push_back({new_position+glm::vec3(-0.5*size.x,  0.5*size.y, 0.0), glm::vec2(0, 1)});
          vb.feedDatatoAllocated(&vertices[0], 4*sizeof(PosUV));
          vertices.clear();
+         return true;
     }
 
 public:
-    void loadData(glm::vec3 position, glm::vec2 size){
+    void loadData(glm::vec3 position, glm::vec2 size, std::string textureLocation){
         this->position = position;
         this->size = size;
         vb.allocateDynamically(4*sizeof(PosUV));
@@ -2747,6 +2747,7 @@ public:
         va.addBuffer(vb, layout);
         unsigned int indices[] ={0, 1, 2, 2, 3, 0};
         ib.loadData(indices, 6);
+        texture.loadTexture(textureLocation);
     }
 
     void setPosition(glm::vec3 position){
@@ -2761,15 +2762,19 @@ public:
         shader.loadShader(shaderLocation);
     }
 
-    void draw(glm::mat4 view, glm::mat4 projection){
-        calculateVertices(view);
+    void draw(glm::mat4 viewProjection){
+        if(!calculateVertices(viewProjection)){
+            return;
+        }
         va.bind();
         ib.bind();
         shader.bind();
-        shader.addUniformMat4f("u_view", view);
-        shader.addUniformMat4f("u_projection", projection);
+        texture.bind();
+        shader.addUniform1i("u_slot", 0);
         GLCall(glDrawElements(GL_TRIANGLES, ib.getCount() , GL_UNSIGNED_INT, NULL));
     }
+
+
 };
 
 class Renderer{

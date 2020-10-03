@@ -16,6 +16,9 @@
 
 OpenGL::Shader shader;
 GUI mainMenu;
+GUI targetGui;
+GUI planetDetails[10];
+
 OpenGL::Shader GUI::shader;
 
 Renderer renderer;
@@ -33,10 +36,9 @@ Planet uranus;
 Planet neptune;
 
 Planet moon;
-//Terrain terrain;
-//Terrain to be drawn for each planet
-//Billboard billboard;
-//Shader Billboard::shader;
+
+Billboard billboard;
+OpenGL::Shader Billboard::shader;
 
 Spaceship ship;
 Tools::Camera camera;
@@ -58,11 +60,9 @@ bool keyBuffer[128];
 bool mouseBuffer[2];
 
 Spacetime spacetime;
-Spacetime earthSystem;
 Vector3 pos;
-double radius_scale = 30.0/695842e3;//6e-6;
-double position_scale = 75e-11;//15e-11;
-double moons_position_scale = 12e-10; //120e-10;//15e-11;
+double radius_scale = 27.0/695842e3;//6e-6;
+double position_scale = 90e-11;//15e-11;
 
 int physicsInitiate(){
 	Matter Mercury;
@@ -93,6 +93,12 @@ int physicsInitiate(){
     Earth.setVelocity(Vector3::getVector(0,0,1).scale(29.5e3));
     Earth.setRadius(6357e3);
 
+        Matter Moon;
+        Moon.setMass(7.342e22);
+        Moon.setPosition(Vector3::getVector(0.3633e9+147.09e9,0,0));
+        Moon.setVelocity(Vector3::getVector(0,0,1).scale(1.0823e3+29.5e3));
+        Moon.setRadius(1734.4e3);
+
     Mars.setMass(6.4171e23);
     Mars.setPosition(Vector3::getVector(206.62e9,0,0));
     Mars.setVelocity(Vector3::getVector(0,0,1).scale(25.80e3));
@@ -118,30 +124,16 @@ int physicsInitiate(){
 	Neptune.setVelocity(Vector3::getVector(0, 0, 1).scale(6.10e3));
     Neptune.setRadius(24622e3);
 
-//	Pluto.setMass(1.303e22);
-//	Pluto.setPosition(Vector3::getVector(7375.93e9, 0, 0));
-//	Pluto.setVelocity(Vector3::getVector(0, 0, 1).scale(3.71e3));
-
 	spacetime.addMatter(0,Sun);
     spacetime.addMatter(1,Mercury);
 	spacetime.addMatter(2, Venus);
     spacetime.addMatter(3,Earth);
+        spacetime.addMatter(31,Moon);
     spacetime.addMatter(4,Mars);
     spacetime.addMatter(5, Jupiter);
 	spacetime.addMatter(6, Saturn);
 	spacetime.addMatter(7, Uranus);
 	spacetime.addMatter(8, Neptune);
-
-    Matter Moon;
-    Moon.setMass(7.342e22);
-    Moon.setPosition(Vector3::getVector(0.3633e9,0,0));
-    Moon.setVelocity(Vector3::getVector(0,0,1).scale(1.0823e3));
-    Moon.setRadius(1734.4e3);
-
-    Earth.setPosition(Vector3::getVector(0.00, 0.00, 0.00));
-    Earth.setVelocity(Vector3::getVector(0.00, 0.00, 0.00));
-    earthSystem.addMatter(0, Earth);
-    earthSystem.addMatter(1, Moon);
     return 0;
 }
 
@@ -239,7 +231,7 @@ void init(){
     mercury.loadPlanet("res/textures/mercury.png", radius_scale*spacetime.getMatter(1).getRadius(), 8);
     venus.loadPlanet("res/textures/venus.png", radius_scale*spacetime.getMatter(2).getRadius(), 8);
     earth.loadPlanet("res/textures/earth.png", radius_scale*spacetime.getMatter(3).getRadius(), 8);
-        moon.loadPlanet("res/textures/moon.png", radius_scale*earthSystem.getMatter(1).getRadius(), 8);
+        moon.loadPlanet("res/textures/moon.png", radius_scale*spacetime.getMatter(31).getRadius(), 8);
     mars.loadPlanet("res/textures/mars.png", radius_scale*spacetime.getMatter(4).getRadius(), 8);
     jupiter.loadPlanet("res/textures/jupiter.png", radius_scale*spacetime.getMatter(5).getRadius(), 8);
     saturn.loadPlanet("res/textures/saturn.png", radius_scale*spacetime.getMatter(6).getRadius(), 8);
@@ -293,6 +285,21 @@ void init(){
     processes.push_back("res/shaders/VerticalBlur.shader");
     processes.push_back("res/shaders/Bloom.shader");
     bloomPostProcessor.load(800, 600, screenWidth, screenHeight, processes, 0.963);
+
+    planetDetails[0].load(glm::vec2(0.625, 0.625), glm::vec2(0.625, 0.625), "res/textures/sun_details.png");
+    planetDetails[1].load(glm::vec2(0.625, 0.625), glm::vec2(0.625, 0.625), "res/textures/mercury_details.png");
+    planetDetails[2].load(glm::vec2(0.625, 0.625), glm::vec2(0.625, 0.625), "res/textures/venus_details.png");
+    planetDetails[3].load(glm::vec2(0.625, 0.625), glm::vec2(0.625, 0.625), "res/textures/earth_details.png");
+    planetDetails[4].load(glm::vec2(0.625, 0.625), glm::vec2(0.625, 0.625), "res/textures/mars_details.png");
+    planetDetails[5].load(glm::vec2(0.625, 0.625), glm::vec2(0.625, 0.625), "res/textures/jupiter_details.png");
+    planetDetails[6].load(glm::vec2(0.625, 0.625), glm::vec2(0.625, 0.625), "res/textures/saturn_details.png");
+    planetDetails[7].load(glm::vec2(0.625, 0.625), glm::vec2(0.625, 0.625), "res/textures/uranus_details.png");
+    planetDetails[8].load(glm::vec2(0.625, 0.625), glm::vec2(0.625, 0.625), "res/textures/neptune_details.png");
+    planetDetails[9].load(glm::vec2(0.625, 0.625), glm::vec2(0.625, 0.625), "res/textures/moon_details.png");
+
+    targetGui.load(glm::vec2(0.0, 0.0), glm::vec2(0.05, 0.065), "res/textures/center.png");
+    billboard.loadData(glm::vec3(0.0),glm::vec2(0.5, 0.5), "res/textures/earth_details.png");
+    Billboard::specifyShader("res/shaders/Billboard.shader");
 }
 
 static void resize_display(int width, int height){
@@ -342,6 +349,7 @@ static void handleKey(){
     bool accelerated = false;
     if(keyBuffer[' ']){
         spacetime.toggleLock();
+        keyBuffer[' '] = false;
     }
     if(keyBuffer['w']){
         ship.moveForward();
@@ -387,7 +395,6 @@ static void display(void){
     }
     else if(currentState == SAILING){
         spacetime.update();
-        earthSystem.update();
         double dt = spacetime.getDt();
 
         ship.setPosition(spacetime.getPosition(position_scale));
@@ -408,6 +415,7 @@ static void display(void){
             pos=spacetime.getMatter(0).getPosition();
             pos=pos.scale(position_scale);
             sun.setPosition(glm::vec3(pos.getValue1(), pos.getValue2(), pos.getValue3()));
+            sun.increaseRotation(360.0*dt/(25.31*24.0*60.0*60.0));
             sun.drawPlanet(shader, viewProj);
             ship.draw(shader, viewProj);
             shader.addUniform1i("u_useLighting", 1);
@@ -430,8 +438,11 @@ static void display(void){
             earth.increaseRotation(360.0*dt/(24.0*60.0*60.0));
             earth.drawPlanet(shader, viewProj);
 
-                pos = earthSystem.getMatter(1).getPosition() - earthSystem.getMatter(0).getPosition();
-                pos = pos.scale(moons_position_scale) + spacetime.getMatter(3).getPosition().scale(position_scale);
+                billboard.setPosition(glm::vec3(pos.getValue1(), pos.getValue2()+0.75, pos.getValue3()));
+                billboard.draw(viewProj);
+
+                pos=spacetime.getMatter(31).getPosition();
+                pos=pos.scale(position_scale);
                 moon.setPosition(glm::vec3(pos.getValue1(), pos.getValue2(), pos.getValue3()));
                 moon.increaseRotation(360.0*dt/(27.4*24.0*60.0*60.0));
                 moon.drawPlanet(shader, viewProj);
@@ -469,7 +480,17 @@ static void display(void){
             skybox.increaseRotation();
             skybox.render(view, projectionMatrix);
         bloomPostProcessor.stopSampling(screenWidth, screenHeight);
+
+        glDisable(GL_DEPTH_TEST);
         bloomPostProcessor.drawProcessed(screenWidth, screenHeight);
+        if(spacetime.isLocked()){
+            int id = spacetime.getLockedId();
+            if(id == 31){id = 9;}
+            planetDetails[id].draw();
+        }
+        targetGui.draw();
+
+        glEnable(GL_DEPTH_TEST);
     }
 
     /*
@@ -526,6 +547,7 @@ void mouseFunc(int button, int state, int x, int y){
 
             if(normal_x>0.10 && normal_x<0.40 && normal_y>0.27 && normal_y<0.90){
                 glutSetCursor(GLUT_CURSOR_NONE);
+                //glutSetCursor(GLUT_CURSOR_CROSSHAIR);
                 currentState = SAILING;
                 if(!spacetime.isLocked()){
                     spacetime.toggleLock();

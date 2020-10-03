@@ -10,7 +10,7 @@ class Spacetime{
 private:
     double grid[N][N][N][3];
     map <int,Matter> matters;
-	double dt = 1*60*60;//this second per frame
+	double dt = 9*60;//this second per frame
     double gravDilFactor;
 
     //Property of spaceship
@@ -77,7 +77,7 @@ public:
 //            for (auto& m: matters){
 //                intensity =intensity + m.second.getGravitationalField(position).scale(9e28/m.second.getMass());
 //            }
-            intensity = getGravitationalField(position,dt);
+            intensity = getGravitationalField(position);
             //Update the velocity and position from space time gravity
             this->velocity = this->velocity+intensity.scale(dt);
             this->position = this->position+this->velocity.scale(dt);
@@ -248,6 +248,10 @@ public:
 
     bool isLocked(){
         return lock;
+    }
+
+    int getLockedId(){
+        return lockId;
     }
 
     void getGrid(double grid[N][N][N][3]){

@@ -230,4 +230,8 @@ void main()
             }
         }
     }
+    //Color value is calculated for all
+    //Doppler shift here
+
+
 }
