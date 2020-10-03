@@ -54,6 +54,7 @@ Tools::ShadowLoader shadow;
 Tools::FPSManager fpsManager(FPS);
 
 bool keyBuffer[128];
+bool mouseBuffer[2];
 
 Spacetime spacetime;
 Spacetime earthSystem;
@@ -331,29 +332,36 @@ static void handleKey(){
         closeWindow();
         return;
     }
-    glm::vec3 direction = glm::vec3(0.0);
-    bool move_forward = false;;
+
+    bool accelerated = false;
     if(keyBuffer['w']){
-        direction += glm::normalize(-camera.getDirection());
-        move_forward = true;
+        ship.moveForward();
+        accelerated = true;
     }
     if(keyBuffer['a']){
-        direction += glm::normalize(glm::cross(glm::vec3(0.0, 1.0, 0.0), -camera.getDirection()));
-        move_forward = true;
+        ship.moveLeft();
+        accelerated = true;
     }
     if(keyBuffer['s']){
-        direction += glm::normalize(camera.getDirection());
-        move_forward = true;
+        ship.moveBackward();
+        accelerated = true;
     }
     if(keyBuffer['d']){
-        direction += glm::normalize(glm::cross(-camera.getDirection(), glm::vec3(0.0, 1.0, 0.0)));
-        move_forward = true;
+        ship.moveRight();
+        accelerated = true;
     }
-
-    if(move_forward){
-        ship.setDirection(direction);
-        ship.moveForward();
+    if(accelerated){
+        ship.setDirection(-camera.getDirection());
         spacetime.accelerate(ship.getAcceleration());
+    }
+}
+
+static void handleMouse(){
+    if(mouseBuffer[0]){
+        ship.setDirection(-camera.getDirection());
+    }
+    else if(mouseBuffer[1]){
+        spacetime.forceShipToStop();
     }
 }
 
@@ -362,6 +370,8 @@ static void display(void){
     fpsManager.updateCounter();
 
     handleKey();
+    handleMouse();
+
     spacetime.update();
     ship.setPosition(spacetime.getPosition(position_scale));
 
@@ -499,12 +509,24 @@ void mouseMoved(int x,int y){
 }
 
 void mouseFunc(int button, int state, int x, int y){
-    if(button == GLUT_LEFT_BUTTON && state==GLUT_DOWN){
-        ship.setDirection(-camera.getDirection());
+    if(button == GLUT_LEFT_BUTTON){
+            if(state == GLUT_DOWN)
+            {
+                mouseBuffer[0] = true;
+            }
+            else if(state == GLUT_UP){
+                mouseBuffer[0] = false;
+            }
     }
 
-    else if(button == GLUT_RIGHT_BUTTON && state==GLUT_DOWN){
-        spacetime.forceShipToStop();
+    else if(button == GLUT_RIGHT_BUTTON){
+            if(state == GLUT_DOWN)
+            {
+                mouseBuffer[1] = true;
+            }
+            else if(state == GLUT_UP){
+                mouseBuffer[1] = false;
+            }
     }
 
 }

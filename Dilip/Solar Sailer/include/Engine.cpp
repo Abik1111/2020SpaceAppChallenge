@@ -2452,7 +2452,7 @@ private:
     glm::vec3 position;
     glm::vec3 direction;
     glm::dvec3 acceleration;
-//    const double acceleration_mag = 1e6;//Acceleration is in space-time reference
+    const double acceleration_mag = 9.0/60.0;
     float yaw;
     float pitch;
     ObjMesh body;
@@ -2492,7 +2492,22 @@ public:
     }
 
     void moveForward(){
-        this->acceleration = 9.0/60.0*glm::dvec3(this->direction);
+        this->acceleration = acceleration_mag*glm::dvec3(this->direction);
+    }
+
+    void moveBackward(){
+        this->acceleration = acceleration_mag*glm::dvec3(-this->direction);
+    }
+
+
+    void moveRight(glm::vec3 upVector = glm::vec3(0.0, 1.0, 0.0)){
+        glm::vec3 right = glm::normalize(glm::cross(direction, upVector));
+        this->acceleration = acceleration_mag*glm::dvec3(right);
+    }
+
+    void moveLeft(glm::vec3 upVector = glm::vec3(0.0, 1.0, 0.0)){
+        glm::vec3 left = glm::normalize(glm::cross(upVector, direction));
+        this->acceleration = acceleration_mag*glm::dvec3(left);
     }
 
     glm::dvec3 getAcceleration(){
