@@ -1753,12 +1753,11 @@ public:
     *@param cameraFar: far point of camera for ensuring that sky-box never clips off the camera
     *@param fogColor: array of fogColor in RGB
     */
-    void loadSkyBox(std::vector<std::string> skyBoxes, std::string shaderFile, float cameraFar, float* fogColor){
+    void loadSkyBox(std::vector<std::string> skyBoxes, std::string shaderFile, float cameraFar){
         cm.loadTexture(skyBoxes);
         shader.loadShader(shaderFile);
         shader.bind();
         shader.addUniform1i("cubeMap", 0);//Slot of cube-map texture
-        shader.addUniform3f("fogColor", fogColor);//Color of fog to be used in sky-box
 
         const float SIZE = cameraFar/1.8;//Ensuring that diagonal of the cube is also covered by vamera
         float positions[]={
@@ -2452,7 +2451,6 @@ private:
     glm::vec3 position;
     glm::vec3 direction;
     glm::dvec3 acceleration;
-    const double acceleration_mag = 60.0/60.0;
     float yaw;
     float pitch;
     ObjMesh body;
@@ -2492,22 +2490,22 @@ public:
     }
 
     void moveForward(){
-        this->acceleration = acceleration_mag*glm::dvec3(this->direction);
+        this->acceleration = glm::dvec3(this->direction);
     }
 
     void moveBackward(){
-        this->acceleration = acceleration_mag*glm::dvec3(-this->direction);
+        this->acceleration = glm::dvec3(-this->direction);
     }
 
 
     void moveRight(glm::vec3 upVector = glm::vec3(0.0, 1.0, 0.0)){
         glm::vec3 right = glm::normalize(glm::cross(direction, upVector));
-        this->acceleration = acceleration_mag*glm::dvec3(right);
+        this->acceleration = glm::dvec3(right);
     }
 
     void moveLeft(glm::vec3 upVector = glm::vec3(0.0, 1.0, 0.0)){
         glm::vec3 left = glm::normalize(glm::cross(upVector, direction));
-        this->acceleration = acceleration_mag*glm::dvec3(left);
+        this->acceleration = glm::dvec3(left);
     }
 
     glm::dvec3 getAcceleration(){
@@ -2590,10 +2588,13 @@ public:
         GUI::shader.deleteShader();
     }
 
-    void draw(){
+    void draw(glm::vec2 offset = glm::vec2(0.0)){
+        float data[]={offset.x, offset.y};
+
         texture.bind();
         GUI::shader.bind();
         GUI::shader.addUniform1i("u_slot", 0);
+        GUI::shader.addUniform2f("offset", data);
         va.bind();
         ib.bind();
         GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL));

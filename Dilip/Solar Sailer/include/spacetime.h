@@ -10,7 +10,10 @@ class Spacetime{
 private:
     double grid[N][N][N][3];
     map <int,Matter> matters;
-	double dt = 9*60;//this second per frame
+	double dt = 60.0*60.0/30.0;//this second per frame
+	double max_acceleration = 6000000.0;
+    double speedLimits[4] = {16000.00, 90000.00, 0.25*C, C};
+    double accelerations[4] = {160.00/dt, 900.00/dt, 0.0025*C/dt, 0.01*C/dt};
     double gravDilFactor;
 
     //Property of spaceship
@@ -21,17 +24,15 @@ private:
     Vector3 posFromMatter;
     bool lock;
     int lockId;
+    int currentSpaceshipType;
 public:
     Spacetime(){
         lock = false;
         time = 0;
-        //posFromMatter = Vector3::getVector(64000e3, 0, 0);
         lockId = 3;
         position.setValue(145.5e9, 0, 0);
-        //position.setValue(150e9,100,100);//150thryo//(-2.81622223e3,0,0);//81622223e3
-        //velocity.setValue(0.999*C,0,0);
+        currentSpaceshipType = 1;
         gravDilFactor=1;
-
     }
 
     /**Toggle Lock**/
@@ -56,13 +57,26 @@ public:
         this->position.setValue(double(position.x)/scale, double(position.y)/scale, double(position.z)/scale);
     }
 
+    void setSpaceShipType(int type){
+        this->velocity = Vector3::getVector(0.0, 0.0, 0.0);
+        currentSpaceshipType = type;
+    }
+
     /**Velocity is relative to physics engine*/
     void accelerate(glm::dvec3 acceleration){
-        this->velocity = this->velocity + Vector3::getVector(acceleration.x, acceleration.y, acceleration.z).scale(dt);
+        double magnetude_of_acceleration = accelerations[currentSpaceshipType]*(7.2/(6.0+30.0*velocity.getMagnitude()/speedLimits[currentSpaceshipType])-0.2);
+        Vector3 temp_velocity = this->velocity + Vector3::getVector(acceleration.x, acceleration.y, acceleration.z).scale(dt*magnetude_of_acceleration);
+        if(temp_velocity.getMagnitude()<speedLimits[currentSpaceshipType]){this->velocity = temp_velocity;}
     }
 
     void forceShipToStop(){
         this->velocity = this->velocity.scale(0);
+    }
+
+    void forceSynchronize(){
+        for (auto& m: matters) {
+            m.second.setTime(this->time);
+        }
     }
 
     void addMatter(int id,Matter matter){
@@ -70,6 +84,7 @@ public:
     }
 
     void update(){
+
         time=time+dt;
         Vector3 intensity;
 
@@ -90,6 +105,13 @@ public:
 		double radius;
 		double emissivity;
         double v_mag_ship=velocity.getMagnitude();
+
+        if(lock){
+            Vector3 temp = matters.at(lockId).getVelocity()+this->velocity;
+            temp.scale(1.0+abs(velocity.dot(matters.at(lockId).getVelocity()))/(C*C));
+            v_mag_ship = temp.getMagnitude();
+        }
+
         //acceleration update
         for (auto& m: matters){
             intensity = this->getGravitationalField(m.second.getPosition(),m.first);
@@ -160,7 +182,6 @@ public:
 
             double netGravDilFactor = gravDilFactor-GM/r_mag;
             netGravDilFactor=1/sqrt(1-2*netGravDilFactor/(C*C));
-
             m.second.updateVelocity(this->dt*netGravDilFactor,v_mag_ship);
         }
 
@@ -168,7 +189,7 @@ public:
         for (auto& m: matters) {
             m.second.updatePosition();
         }
-		for (auto& m : matters) {
+		for (auto& m : matters){
 			if (!m.second.isBlackBody()) {
 				tPower4 = this->calculateTemperature(m.second.getPosition(), m.first);
 				emissivity = m.second.getEmissivity();
@@ -178,8 +199,12 @@ public:
 		}
     }
 
+    /**This function expects user to pass the center of grid*/
     void gridUpdate(double init_x,double init_y,double init_z,double gridLength){
         double scale=1,x,y,z;
+        init_x -= N*gridLength/2.0;
+        init_y -= N*gridLength/2.0;
+        init_z -= N*gridLength/2.0;
         Vector3 intensity;
         for(int i=0;i<N;i++){
             for(int j=0;j<N;j++){
@@ -240,6 +265,18 @@ public:
     glm::vec3 getDirection(){
         glm::vec3 dir = glm::vec3(glm::normalize(glm::dvec3(velocity.getValue1(), velocity.getValue2(), velocity.getValue3())));
         return dir;
+    }
+
+    double getVelRatioWithC(){
+        return velocity.getMagnitude()/3.0e8;
+    }
+
+    double getVelocity(){
+        return velocity.getMagnitude();
+    }
+
+    int getSpaceShipType(){
+        return currentSpaceshipType;
     }
 
     double getDt(){

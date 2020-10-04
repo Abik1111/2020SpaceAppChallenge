@@ -74,6 +74,11 @@ public:
 	void setBlackBody(bool isBlackBody) {
 		this->blackBody = isBlackBody;
 	}
+
+	double getRadiationWaveLength(){
+        return 2.897e6/this->temperature;
+	}
+
 	void setBlackHole() {
 		if ((2 * G*this->mass) / (C*C) > this->radius) {
 			this->blackHole = true;
@@ -82,19 +87,25 @@ public:
 			this->blackHole = false;
 		}
 	}
+
+	void setTime(double time){
+        this->time = time;
+	}
+
     //updating
     void updatePosition(){
-        time=time+dt;
-        position=position+velocity.scale(dt);
+        time = time+dt;
+        position = position+velocity.scale(dt);
     }
 
     void updateVelocity(double dt,double v_mag_ship){
         double v_mag=velocity.getMagnitude();
         double dv=v_mag_ship-v_mag;
-        if(dv>=0){
+        if(dv>0){
             dv=dv/(1-v_mag_ship*v_mag/(C*C));
             this->dt=dt/sqrt(1-dv*dv/(C*C));
-        }else{
+        }
+        else{
             dv=dv/(1-v_mag_ship*v_mag/(C*C));
             this->dt=dt*sqrt(1-dv*dv/(C*C));
         }
@@ -134,6 +145,9 @@ public:
 	bool isBlackHole() {
 		return this->blackHole;
 	}
+    Vector3 getVelocity(){
+        return velocity;
+    }
 
 	double calculateTemperature(Vector3 effectPosition) {
 		double tPower4 = 0;
@@ -207,7 +221,6 @@ public:
 
         return intensity;
     }
-
 
 
 };

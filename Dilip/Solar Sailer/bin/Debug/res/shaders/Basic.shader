@@ -98,12 +98,92 @@ uniform SpotLight slight;
 uniform int u_useLighting;
 uniform int u_lightType;
 
+uniform float u_velocity;
+uniform float u_wavelength;
+
 in vec2 v_TexCoord;
 in float v_texSlot;
 in vec3 v_normal;
 in vec3 v_fPos;
 
 out vec4 color;
+
+float powerOfExp(float lambda, float a, float b){
+    return (lambda-(b+a)/2)/((b-a)/2);
+}
+
+float getColor(float lambda, float a, float b){
+    return exp(-powerOfExp(lambda, a, b)*powerOfExp(lambda, a, b));
+}
+
+float shiftedLambda(float lambda){
+    return lambda*pow((1-u_velocity)/(1+u_velocity), 0.5);
+}
+
+float wavelength_shift(float lambda){
+    return shiftedLambda(lambda)-lambda;
+}
+
+float max(float r, float g, float b)
+{
+	float max_val = r;
+	if(max_val < g){
+		max_val = g;
+	}
+	if (max_val < b){
+		max_val = b;
+	}
+	return max_val;
+}
+
+float min(float r, float g, float b)
+{
+	float min_val = r;
+	if(min_val > g){
+		min_val = g;
+	}
+	if (min_val > b){
+		min_val = b;
+	}
+	return min_val;
+}
+
+float RGB_to_lambda(float r, float g, float b)
+{
+	float max_val, min_val, h, s, v, wavelength;
+    max_val = max(r, g, b);
+    min_val = min(r, g, b);
+    if(max_val == 0){
+        s = 0;
+        h = 0;
+    }
+
+    else if((max_val - min_val) == 0.0 ){
+        s = 0;
+        h = 0;
+    }
+    else{
+        s = (max_val - min_val) / max_val;
+        if (max_val == r){
+            h = 60 * ((g - b) / (max_val - min_val)) + 0;
+        }
+        else if (max_val == g ){
+            h = 60 * ((b - r) / (max_val - min_val)) + 120;
+        }
+        else{
+            h = 60 * ((r - g) / (max_val - min_val)) + 240;
+        }
+    }
+
+    if(h < 0){
+        h = h + 360.0;
+    }
+    s = s * 255.0;
+    v = v * 255.0;
+    wavelength = 620.0 - (250.0 / 270.0 )* h;
+    return wavelength;
+}
+
 
 void main()
 {
@@ -232,6 +312,28 @@ void main()
     }
     //Color value is calculated for all
     //Doppler shift here
+    if(u_velocity>=0.0){
+        float wavelength = shiftedLambda(u_wavelength);
+        vec4 wavelengthColor = vec4(getColor(wavelength, 520.0, 630.0), getColor(wavelength, 500.0, 590.0), getColor(wavelength, 410.0, 480.0), 1.0);
 
+        wavelength = RGB_to_lambda(color.r, color.g, color.b);
+        wavelength = shiftedLambda(wavelength);
+        vec4 shiftedColor = vec4(getColor(wavelength, 520.0, 630.0), getColor(wavelength, 500.0, 590.0), getColor(wavelength, 410.0, 480.0), 1.0);
 
+        float gamma = 1.2-7.2/(6+30.0*u_velocity);
+        shiftedColor = (wavelengthColor+shiftedColor)/2.0;
+        color = (1-gamma)*color+gamma*shiftedColor;
+    }
+    else{
+        float wavelength = shiftedLambda(u_wavelength);
+        vec4 wavelengthColor = vec4(getColor(wavelength, 520.0, 630.0), getColor(wavelength, 500.0, 590.0), getColor(wavelength, 410.0, 480.0), 1.0);
+
+        wavelength = RGB_to_lambda(color.r, color.g, color.b);
+        wavelength = shiftedLambda(wavelength);
+        vec4 shiftedColor = vec4(getColor(wavelength, 520.0, 630.0), getColor(wavelength, 500.0, 590.0), getColor(wavelength, 410.0, 480.0), 1.0);
+
+        float gamma = 1.2-7.2/(6-30.0*u_velocity);
+        shiftedColor = (wavelengthColor+shiftedColor)/2.0;
+        color = (1-gamma)*color+gamma*shiftedColor;
+    }
 }

@@ -1,7 +1,7 @@
 # depslib dependency file v1.0
 1600700690 source:d:\programming projects\c++\solar sailer\include\audio.cpp
 
-1601763169 source:d:\programming projects\c++\solar sailer\include\engine.cpp
+1601831005 source:d:\programming projects\c++\solar sailer\include\engine.cpp
 	<GL/glew.h>
 	<GL/glut.h>
 	<stdlib.h>
@@ -1006,7 +1006,7 @@
 1586767292 source:d:\programming projects\c++\solar sailer\include\stb_image\stb_image.cpp
 	"stb_image.h"
 
-1601763182 source:d:\programming projects\c++\solar sailer\main.cpp
+1601832130 source:d:\programming projects\c++\solar sailer\main.cpp
 	<GL/glew.h>
 	<GL/glut.h>
 	<stdlib.h>
@@ -1020,7 +1020,7 @@
 	<glm/glm.hpp>
 	<glm/gtc/matrix_transform.hpp>
 
-1601763752 d:\programming projects\c++\solar sailer\include\engine.cpp
+1601831005 d:\programming projects\c++\solar sailer\include\engine.cpp
 	<GL/glew.h>
 	<GL/glut.h>
 	<stdlib.h>
@@ -1039,11 +1039,11 @@
 	<cstdlib>
 	<math.h>
 
-1601756681 d:\programming projects\c++\solar sailer\include\spacetime.h
+1601832763 d:\programming projects\c++\solar sailer\include\spacetime.h
 	"matter.h"
 	<map>
 
-1601651525 d:\programming projects\c++\solar sailer\include\matter.h
+1601821119 d:\programming projects\c++\solar sailer\include\matter.h
 	<iostream>
 	"vector3.h"
 	<math.h>
