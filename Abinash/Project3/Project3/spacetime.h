@@ -10,7 +10,7 @@ class Spacetime{
 private:
     double grid[N][N][N][3];
     map <int,Matter> matters;
-	double dt = 40*60*60;
+	double dt = 60;
     double gravDilFactor;
     double time;
     Vector3 position;
